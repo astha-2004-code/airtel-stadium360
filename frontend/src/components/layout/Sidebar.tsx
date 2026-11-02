@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       name: 'Reports & Exports',
       description: 'Auditable PDF & CSVs',
       icon: FileText,
-      status: 'locked',
+      status: 'active',
       badge: 'Module 10',
     },
   ]

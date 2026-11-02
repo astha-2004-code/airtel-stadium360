@@ -15,3 +15,5 @@ bcrypt>=4.2.0
 python-multipart>=0.0.19
 pytest>=8.3.0
 httpx>=0.28.0
+reportlab>=4.2.0
+pillow>=10.0.0

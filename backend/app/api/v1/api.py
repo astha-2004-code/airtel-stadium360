@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     connectivity,
     critical_services,
     auth,
+    reports,
 )
 
 api_router = APIRouter()
@@ -23,6 +24,7 @@ api_router.include_router(simulator.router, prefix="/simulator", tags=["simulato
 api_router.include_router(budget.router, prefix="/budget", tags=["budget"])
 api_router.include_router(connectivity.router, prefix="/connectivity", tags=["connectivity"])
 api_router.include_router(critical_services.router, prefix="/critical-services", tags=["critical-services"])
+api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 
 
 
