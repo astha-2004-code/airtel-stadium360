@@ -7,7 +7,7 @@
 [![React: 18](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev)
 [![FastAPI: 0.115](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
 [![Docker: Ready](https://img.shields.io/badge/Docker-Multi--Stage-2496ED.svg)](https://docker.com)
-[![Tests: 79 Passing](https://img.shields.io/badge/Tests-79%20Passing-success.svg)](backend/tests)
+[![Tests: 89 Passing](https://img.shields.io/badge/Tests-89%20Passing-success.svg)](backend/tests)
 
 An enterprise-grade, AI-powered predictive network optimization and intelligent stadium connectivity platform built for the **Airtel SYNC Competition 2026**. Designed specifically for high-density mega-events at the **Narendra Modi Stadium, Motera, Ahmedabad** (1,00,000+ spectators) under a strict **₹4.00 Crore capital and operating budget cap**.
 
@@ -60,10 +60,11 @@ graph TD
         M9["M9: Enterprise Auth & Judge RBAC"]
         M10["M10: Audit Reports & CSV Exports"]
         M11["M11: Production Docker & Deployment"]
+        EVAL["Network Performance & Evaluation Centre"]
     end
 
     M1 --> M2 --> M3 --> M4 --> M5 --> M6
-    M6 --> M7 --> M8 --> M9 --> M10 --> M11
+    M6 --> M7 --> M8 --> M9 --> M10 --> M11 --> EVAL
 ```
 
 ### Module Breakdown:
@@ -78,6 +79,7 @@ graph TD
 9. **Module 9 — Authentication & Role-Based Access Governance**: bcrypt (12 rounds) and HMAC-SHA256 JWT access tokens, pre-seeded demo personas (`admin@airtel.com`, `engineer@airtel.com`, `viewer@airtel.com`), and 1-click persona switcher for competition judges.
 10. **Module 10 — Reporting & Data Exports**: Publication-grade PDF assessment audit document (`ReportLab` 5.1.0) with cryptographic SHA-256 seal, and downloadable CSV exports for site capacity, infrastructure BOM, and multi-scenario benchmarks.
 11. **Module 11 — Production Containerization & Deployment Orchestration**: Multi-stage hardened Dockerfiles (`backend/Dockerfile`, `frontend/Dockerfile`), Nginx reverse proxy with gzip compression and security headers, Redis caching, Kubernetes health/readiness probes, and CI/CD pipelines.
+12. **Network Performance & Evaluation Centre**: Dedicated enterprise dashboard providing a comprehensive 3-way performance audit (Baseline 65k vs Proposed 100k vs Live What-If Scenario), site-wise PRB heatmaps, empirical 5G accessibility gains (38.5% to 86.2%), UPI failure breakdown (7.11% to 1.12%), dark fibre backhaul expansion (0.99 km), financial ROI under ₹4.00 Cr, and the transparent 0–100 *Airtel Stadium360 Internal Evaluation Score*.
 
 ---
 
@@ -150,7 +152,7 @@ Visit the application:
 Run the full automated test suite covering all 11 modules:
 
 ```bash
-# Backend Pytest Test Suite (79 passing tests)
+# Backend Pytest Test Suite (89 passing tests across 12 modules)
 pytest -v
 
 # Frontend TypeScript & Vite Production Bundle Build

@@ -14,6 +14,7 @@ import {
   Lock,
   ChevronRight,
   Sparkles,
+  Activity,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -102,6 +103,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       icon: FileText,
       status: 'active',
       badge: 'Module 10',
+    },
+    {
+      id: 'evaluation',
+      name: 'Evaluation Centre',
+      description: 'Network Performance Audit',
+      icon: Activity,
+      status: 'active',
+      badge: 'Evaluation',
     },
   ]
 

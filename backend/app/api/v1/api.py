@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     critical_services,
     auth,
     reports,
+    evaluation,
 )
 
 api_router = APIRouter()
@@ -25,6 +26,7 @@ api_router.include_router(budget.router, prefix="/budget", tags=["budget"])
 api_router.include_router(connectivity.router, prefix="/connectivity", tags=["connectivity"])
 api_router.include_router(critical_services.router, prefix="/critical-services", tags=["critical-services"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
+api_router.include_router(evaluation.router, prefix="/evaluation", tags=["evaluation"])
 
 
 

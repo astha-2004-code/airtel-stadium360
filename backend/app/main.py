@@ -7,6 +7,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.api.v1.api import api_router
+from app.api.v1.endpoints import evaluation
 from app.schemas.health import HealthResponse
 
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +55,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(evaluation.router, prefix="/api/evaluation", tags=["evaluation"])
 
 
 @app.get("/", tags=["root"])

@@ -11,6 +11,7 @@ import { ConnectivityPage } from './pages/ConnectivityPage'
 import { CriticalServicesPage } from './pages/CriticalServicesPage'
 import { AuthManagementPage } from './pages/AuthManagementPage'
 import { ReportsPage } from './pages/ReportsPage'
+import { EvaluationPage } from './pages/EvaluationPage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -92,6 +93,8 @@ export function App() {
             <AuthManagementPage />
           ) : currentModule === 'reports' ? (
             <ReportsPage initialCapacity={capacity} />
+          ) : currentModule === 'evaluation' ? (
+            <EvaluationPage initialCapacity={capacity} />
           ) : (
             <div className="p-12 card-gradient rounded-2xl border border-[#223050] text-center space-y-4">
               <h2 className="text-xl font-bold text-white">Module Pending Development</h2>
