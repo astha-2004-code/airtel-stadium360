@@ -101,3 +101,4 @@ class CriticalServicesSimulationResponse(BaseModel):
     total_gmv_protected_lakhs: float
     status: str
     telecom_explanation: str
+

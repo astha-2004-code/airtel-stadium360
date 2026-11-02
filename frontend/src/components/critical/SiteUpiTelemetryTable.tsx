@@ -122,3 +122,4 @@ export const SiteUpiTelemetryTable: React.FC<SiteUpiTelemetryTableProps> = ({ si
     </div>
   )
 }
+

@@ -8,6 +8,7 @@ import {
   DollarSign,
   Wifi,
   ShieldAlert,
+  ShieldCheck,
   FileText,
   Settings,
   Lock,
@@ -85,6 +86,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       icon: ShieldAlert,
       status: 'active',
       badge: 'Module 8',
+    },
+    {
+      id: 'auth',
+      name: 'Access & Security',
+      description: 'JWT & Role Governance',
+      icon: ShieldCheck,
+      status: 'active',
+      badge: 'Module 9',
     },
     {
       id: 'reports',

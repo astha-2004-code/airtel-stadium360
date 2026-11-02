@@ -158,3 +158,4 @@ def test_critical_services_api_endpoints_direct():
     assert sim.stadium_capacity == 120000
     assert sim.projected_upi_failure_rate_pct < 1.5
     assert sim.status == "PROTECTED"
+

@@ -48,3 +48,4 @@ export const simulateCriticalServices = async (
   const resp = await axios.post<CriticalServicesSimulationResponse>(`${API_BASE}/simulate`, payload)
   return resp.data
 }
+

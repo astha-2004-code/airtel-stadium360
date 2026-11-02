@@ -73,3 +73,4 @@ def simulate_critical_services(req: CriticalServicesSimulationRequest):
     Simulates UPI reliability and emergency service performance under variable operational inputs.
     """
     return critical_services_engine.simulate_critical_services(req)
+

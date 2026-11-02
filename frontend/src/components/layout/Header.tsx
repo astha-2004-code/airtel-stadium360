@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Users,
   Clock,
@@ -8,7 +8,13 @@ import {
   CheckCircle2,
   Calendar,
   Layers,
+  User as UserIcon,
+  Shield,
+  ChevronDown,
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { AuthModal } from '../auth/AuthModal'
+import { UserProfileDrawer } from '../auth/UserProfileDrawer'
 
 interface HeaderProps {
   capacity: number
@@ -31,6 +37,10 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   isRefreshing,
 }) => {
+  const { user, isAuthenticated } = useAuth()
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState<boolean>(false)
+
   const matchPhases = [
     { id: 'Crowd building up', label: '17:00 • Crowd building up' },
     { id: 'Innings break', label: '21:00 • Innings break (Peak Congestion)' },
@@ -44,92 +54,153 @@ export const Header: React.FC<HeaderProps> = ({
     { value: 120000, label: '1,20,000 (Overcapacity Surge)' },
   ]
 
+  const initials = user
+    ? user.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'U'
+
+  const roleColor =
+    user?.role === 'NETWORK_ADMIN'
+      ? 'text-[#FF4D4D] border-red-500/40 bg-red-950/30'
+      : user?.role === 'TELECOM_ENGINEER'
+      ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/30'
+      : 'text-blue-400 border-blue-500/40 bg-blue-950/30'
+
   return (
-    <header className="border-b border-[#223050] bg-[#131B2E]/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      {/* Title & Context */}
-      <div className="flex items-center space-x-3">
-        <div className="p-2 rounded-lg bg-red-900/30 border border-red-700/40 text-[#FF4D4D]">
-          <Activity className="w-5 h-5" />
+    <>
+      <header className="border-b border-[#223050] bg-[#131B2E]/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+        {/* Title & Context */}
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-lg bg-red-900/30 border border-red-700/40 text-[#FF4D4D]">
+            <Activity className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+              <span>Executive Network Command Centre</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#E40000]/20 text-[#FF4D4D] font-mono border border-[#E40000]/30 font-semibold">
+                Live
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400">
+              Real-Time Network Telemetry • 8 Stadium Sites • ₹4 Cr Budget Tracker
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-base font-bold text-white tracking-tight flex items-center space-x-2">
-            <span>Executive Network Command Centre</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#E40000]/20 text-[#FF4D4D] font-mono border border-[#E40000]/30 font-semibold">
-              Live
-            </span>
-          </h1>
-          <p className="text-xs text-slate-400">
-            Real-Time Network Telemetry • 8 Stadium Sites • ₹4 Cr Budget Tracker
-          </p>
-        </div>
-      </div>
 
-      {/* Control Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Match Moment Filter */}
-        <div className="flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 shadow-sm">
-          <Clock className="w-4 h-4 text-[#FF4D4D]" />
-          <span className="text-slate-400 font-medium">Phase:</span>
-          <select
-            value={matchPhase}
-            onChange={(e) => onPhaseChange(e.target.value)}
-            className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+        {/* Control Filters & Identity */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Match Moment Filter */}
+          <div className="flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 shadow-sm">
+            <Clock className="w-4 h-4 text-[#FF4D4D]" />
+            <span className="text-slate-400 font-medium">Phase:</span>
+            <select
+              value={matchPhase}
+              onChange={(e) => onPhaseChange(e.target.value)}
+              className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+            >
+              {matchPhases.map((p) => (
+                <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Attendance Filter */}
+          <div className="flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 shadow-sm">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span className="text-slate-400 font-medium">Crowd:</span>
+            <select
+              value={capacity}
+              onChange={(e) => onCapacityChange(Number(e.target.value))}
+              className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+            >
+              {capacities.map((c) => (
+                <option key={c.value} value={c.value} className="bg-slate-900 text-white">
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Network Health Badge */}
+          <div
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${
+              healthStatus === 'CRITICAL'
+                ? 'bg-red-950/40 border-red-700/50 text-red-300'
+                : healthStatus === 'WARNING'
+                ? 'bg-amber-950/40 border-amber-700/50 text-amber-300'
+                : 'bg-emerald-950/40 border-emerald-700/50 text-emerald-300'
+            }`}
           >
-            {matchPhases.map((p) => (
-              <option key={p.id} value={p.id} className="bg-slate-900 text-white">
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            {healthStatus === 'CRITICAL' ? (
+              <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
+            ) : healthStatus === 'WARNING' ? (
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            )}
+            <span>Health: {healthScore}/100 ({healthStatus})</span>
+          </div>
 
-        {/* Attendance Filter */}
-        <div className="flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 shadow-sm">
-          <Users className="w-4 h-4 text-emerald-400" />
-          <span className="text-slate-400 font-medium">Crowd:</span>
-          <select
-            value={capacity}
-            onChange={(e) => onCapacityChange(Number(e.target.value))}
-            className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+          {/* Refresh Button */}
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-all disabled:opacity-50"
+            title="Refresh Telemetry"
           >
-            {capacities.map((c) => (
-              <option key={c.value} value={c.value} className="bg-slate-900 text-white">
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#FF4D4D]' : ''}`} />
+          </button>
 
-        {/* Network Health Badge */}
-        <div
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${
-            healthStatus === 'CRITICAL'
-              ? 'bg-red-950/40 border-red-700/50 text-red-300'
-              : healthStatus === 'WARNING'
-              ? 'bg-amber-950/40 border-amber-700/50 text-amber-300'
-              : 'bg-emerald-950/40 border-emerald-700/50 text-emerald-300'
-          }`}
-        >
-          {healthStatus === 'CRITICAL' ? (
-            <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
-          ) : healthStatus === 'WARNING' ? (
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+          {/* User Profile Pill / Auth Button */}
+          {isAuthenticated && user ? (
+            <button
+              onClick={() => setIsProfileDrawerOpen(true)}
+              className="flex items-center space-x-2.5 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 rounded-xl px-2.5 py-1 transition-all group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#E40000] to-red-800 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                {initials}
+              </div>
+              <div className="text-left hidden xl:block">
+                <div className="text-xs font-bold text-white leading-tight flex items-center gap-1">
+                  <span>{user.full_name}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${roleColor}`}>
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+            </button>
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center space-x-1.5 bg-[#E40000] hover:bg-red-700 text-white text-xs font-bold rounded-xl px-3 py-1.5 shadow-md shadow-red-900/40 transition-colors"
+            >
+              <UserIcon className="w-3.5 h-3.5" />
+              <span>NOC Sign In</span>
+            </button>
           )}
-          <span>Health: {healthScore}/100 ({healthStatus})</span>
         </div>
+      </header>
 
-        {/* Refresh Button */}
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-all disabled:opacity-50"
-          title="Refresh Telemetry"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#FF4D4D]' : ''}`} />
-        </button>
-      </div>
-    </header>
+      {/* Auth Modal & Profile Drawer */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      <UserProfileDrawer
+        isOpen={isProfileDrawerOpen}
+        onClose={() => setIsProfileDrawerOpen(false)}
+        onOpenSwitchAccount={() => setIsAuthModalOpen(true)}
+      />
+    </>
   )
 }
