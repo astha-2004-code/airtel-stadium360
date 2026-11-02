@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardPage } from './pages/DashboardPage'
+import { DigitalTwinPage } from './pages/DigitalTwinPage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -50,11 +51,16 @@ export function App() {
               matchPhase={matchPhase}
               refreshTrigger={refreshTrigger}
             />
+          ) : currentModule === 'digital-twin' ? (
+            <DigitalTwinPage
+              matchPhase={matchPhase}
+              refreshTrigger={refreshTrigger}
+            />
           ) : (
             <div className="p-12 card-gradient rounded-2xl border border-[#223050] text-center space-y-4">
               <h2 className="text-xl font-bold text-white">Module Pending Development</h2>
               <p className="text-sm text-slate-400">
-                This module will be implemented incrementally in the next milestone commit as per the Airtel SYNC roadmap.
+                This module will be implemented incrementally in subsequent milestone commits as per the Airtel SYNC roadmap.
               </p>
               <button
                 onClick={() => setCurrentModule('dashboard')}

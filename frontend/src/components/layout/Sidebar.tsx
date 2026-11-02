@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       name: 'Digital Twin',
       description: '8-Site Stadium Topology',
       icon: Radio,
-      status: 'locked',
+      status: 'active',
       badge: 'Module 2',
     },
     {
@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
           <span className="text-red-300 font-medium tracking-wide">Airtel SYNC 2026</span>
         </div>
         <span className="text-[10px] px-2 py-0.5 rounded bg-red-900/50 text-red-200 font-mono font-bold">
-          v1.0-M1
+          v1.0-M2
         </span>
       </div>
 
@@ -205,8 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
           <span className="font-mono text-emerald-400 font-semibold">Port 8000 (Live)</span>
         </div>
         <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/80">
-          <span>Target Capacity:</span>
-          <span className="text-white font-mono font-bold">1,00,000 Seats</span>
+          <span>Digital Twin Sites:</span>
+          <span className="text-white font-mono font-bold">8 Sites Loaded</span>
         </div>
       </div>
     </aside>
