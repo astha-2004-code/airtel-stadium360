@@ -1,0 +1,161 @@
+version: '3.8'
+
+# ==============================================================================
+# Airtel Stadium360 — Hardened Production Docker Compose Specification
+# Includes network isolation, memory limits, persistent volumes, and healthchecks
+# ==============================================================================
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: stadium360-prod-db
+    restart: always
+    command: >
+      postgres -c max_connections=200
+               -c shared_buffers=512MB
+               -c effective_cache_size=1536MB
+               -c maintenance_work_mem=128MB
+               -c checkpoint_completion_target=0.9
+               -c wal_buffers=16MB
+               -c default_statistics_target=100
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-airtel_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
+      POSTGRES_DB: ${POSTGRES_DB:-airtel_stadium360}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-airtel_admin} -d ${POSTGRES_DB:-airtel_stadium360}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    networks:
+      - stadium360-internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: stadium360-prod-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    networks:
+      - stadium360-internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stadium360-prod-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-airtel_admin}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-airtel_stadium360}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:?Production secret key required}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      - PROJECT_NAME=Airtel Stadium360 API
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '1.0'
+          memory: 1024M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    networks:
+      - stadium360-internal
+      - stadium360-public
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api/v1
+    container_name: stadium360-prod-frontend
+    restart: always
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - stadium360-public
+
+volumes:
+  postgres_data:
+    name: stadium360-prod-postgres-data
+  redis_data:
+    name: stadium360-prod-redis-data
+
+networks:
+  stadium360-internal:
+    name: stadium360-prod-internal
+    internal: true
+  stadium360-public:
+    name: stadium360-prod-public
+    driver: bridge
+
