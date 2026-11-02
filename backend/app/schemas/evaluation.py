@@ -202,3 +202,4 @@ class EvaluationCompareResponse(BaseModel):
     simulated_scenario: ScenarioEvaluationState
     key_improvements: Dict[str, Any]
     newly_infeasible_constraints: List[str]
+

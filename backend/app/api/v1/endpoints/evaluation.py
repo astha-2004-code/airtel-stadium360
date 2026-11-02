@@ -108,3 +108,4 @@ def compare_evaluation_scenarios(
         fibre_distance_km=request.fibre_distance_km,
         five_g_overlays_count=request.five_g_overlays_count,
     )
+
