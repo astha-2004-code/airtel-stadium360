@@ -443,3 +443,4 @@ if __name__ == "__main__":
     generate_budget_planner()
     generate_evaluation()
     print("All 7 screenshots generated successfully in docs/screenshots!")
+
