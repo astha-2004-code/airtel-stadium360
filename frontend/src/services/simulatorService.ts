@@ -28,3 +28,4 @@ export const simulatorService = {
     return response.data
   },
 }
+

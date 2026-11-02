@@ -134,3 +134,4 @@ export interface PresetScenario {
   description: string
   params: SimulationParams
 }
+

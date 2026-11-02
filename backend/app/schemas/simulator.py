@@ -38,3 +38,4 @@ class PresetScenario(BaseModel):
     name: str
     description: str
     params: Dict[str, Any]
+

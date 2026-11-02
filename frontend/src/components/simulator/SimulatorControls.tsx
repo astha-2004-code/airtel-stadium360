@@ -277,3 +277,4 @@ export const SimulatorControls: React.FC<SimulatorControlsProps> = ({ params, on
     </div>
   )
 }
+

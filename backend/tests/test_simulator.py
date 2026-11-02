@@ -146,3 +146,4 @@ def test_simulator_api_endpoints_direct():
     # GET presets
     presets_res = get_presets()
     assert len(presets_res) == 5
+

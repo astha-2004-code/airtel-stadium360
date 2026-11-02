@@ -92,3 +92,4 @@ export const ScenarioPresetsBar: React.FC<ScenarioPresetsBarProps> = ({
     </div>
   )
 }
+

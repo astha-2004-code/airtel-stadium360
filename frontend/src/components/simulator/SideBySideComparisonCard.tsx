@@ -129,3 +129,4 @@ export const SideBySideComparisonCard: React.FC<SideBySideComparisonCardProps> =
     </div>
   )
 }
+

@@ -6,6 +6,7 @@ import { DigitalTwinPage } from './pages/DigitalTwinPage'
 import { CapacityEnginePage } from './pages/CapacityEnginePage'
 import { OptimizerPage } from './pages/OptimizerPage'
 import { SimulatorPage } from './pages/SimulatorPage'
+import { BudgetPage } from './pages/BudgetPage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -69,6 +70,10 @@ export function App() {
             />
           ) : currentModule === 'simulator' ? (
             <SimulatorPage
+              initialCapacity={capacity}
+            />
+          ) : currentModule === 'budget' ? (
+            <BudgetPage
               initialCapacity={capacity}
             />
           ) : (

@@ -94,3 +94,4 @@ def get_presets() -> List[Dict[str, Any]]:
     Returns built-in preset scenarios (World Cup Final, 120k Super Crowd, IPL High 5G, Rain Delay, Low Budget).
     """
     return get_preset_scenarios()
+

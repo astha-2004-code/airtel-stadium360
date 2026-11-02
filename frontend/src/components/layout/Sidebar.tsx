@@ -67,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       name: 'Budget & Assets',
       description: '₹4 Cr Cap Optimizer',
       icon: DollarSign,
-      status: 'locked',
+      status: 'active',
       badge: 'Module 6',
     },
     {
@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
           <span className="text-red-300 font-medium tracking-wide">Airtel SYNC 2026</span>
         </div>
         <span className="text-[10px] px-2 py-0.5 rounded bg-red-900/50 text-red-200 font-mono font-bold">
-          v1.0-M5
+          v1.0-M6
         </span>
       </div>
 

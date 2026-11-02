@@ -394,3 +394,4 @@ def compare_scenarios(
 
 def get_preset_scenarios() -> List[Dict[str, Any]]:
     return PRESET_SCENARIOS
+
