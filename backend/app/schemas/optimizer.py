@@ -86,3 +86,4 @@ class OptimizationResponse(BaseModel):
     site_interventions: List[SiteIntervention]
     cow_deployments: List[CowDeployment]
     unresolved_constraints: List[str]
+

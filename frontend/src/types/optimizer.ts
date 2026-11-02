@@ -97,3 +97,4 @@ export interface OptimizationResponse {
   cow_deployments: CowDeployment[]
   unresolved_constraints: string[]
 }
+

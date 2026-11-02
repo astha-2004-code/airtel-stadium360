@@ -142,3 +142,4 @@ export const BudgetTrackerCard: React.FC<BudgetTrackerCardProps> = ({ budget, co
     </div>
   )
 }
+

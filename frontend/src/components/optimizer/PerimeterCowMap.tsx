@@ -83,3 +83,4 @@ export const PerimeterCowMap: React.FC<PerimeterCowMapProps> = ({ cows }) => {
     </div>
   )
 }
+

@@ -99,3 +99,4 @@ def test_optimizer_api_endpoints_direct():
     # GET cost breakdown
     costs = get_cost_breakdown(budget_limit_crores=4.0)
     assert costs["total"] <= 400.0
+

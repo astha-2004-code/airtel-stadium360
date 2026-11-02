@@ -93,3 +93,4 @@ def get_cost_breakdown(
         capacity=capacity,
     )
     return result["cost_breakdown_lakhs"]
+
