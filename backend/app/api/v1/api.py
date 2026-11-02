@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, dashboard, network, analytics, optimizer, simulator, budget
+from app.api.v1.endpoints import health, dashboard, network, analytics, optimizer, simulator, budget, connectivity
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -9,6 +9,7 @@ api_router.include_router(analytics.router, prefix="/analytics", tags=["analytic
 api_router.include_router(optimizer.router, prefix="/optimizer", tags=["optimizer"])
 api_router.include_router(simulator.router, prefix="/simulator", tags=["simulator"])
 api_router.include_router(budget.router, prefix="/budget", tags=["budget"])
+api_router.include_router(connectivity.router, prefix="/connectivity", tags=["connectivity"])
 
 
 

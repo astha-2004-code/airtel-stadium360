@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       name: '5G Intelligence',
       description: 'EN-DC & Anchor Shield',
       icon: Wifi,
-      status: 'locked',
+      status: 'active',
       badge: 'Module 7',
     },
     {
