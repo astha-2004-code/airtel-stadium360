@@ -11,18 +11,32 @@ provisioning must follow Airtel OSS/EMS change control windows.
 """
 from typing import Dict, List, Any
 import math
-from backend.app.schemas.connectivity import (
-    ConnectivityKpis,
-    EndcNode,
-    EndcArchitecture,
-    MassiveMimoSector,
-    CoverageTier,
-    FallbackRootCause,
-    RrmRecommendation,
-    ConnectivitySimulationRequest,
-    ConnectivitySimulationResponse,
-)
-from backend.app.services.data_loader import get_stadium_sites
+try:
+    from app.schemas.connectivity import (
+        ConnectivityKpis,
+        EndcNode,
+        EndcArchitecture,
+        MassiveMimoSector,
+        CoverageTier,
+        FallbackRootCause,
+        RrmRecommendation,
+        ConnectivitySimulationRequest,
+        ConnectivitySimulationResponse,
+    )
+    from app.services.data_loader import get_stadium_sites
+except ImportError:
+    from backend.app.schemas.connectivity import (
+        ConnectivityKpis,
+        EndcNode,
+        EndcArchitecture,
+        MassiveMimoSector,
+        CoverageTier,
+        FallbackRootCause,
+        RrmRecommendation,
+        ConnectivitySimulationRequest,
+        ConnectivitySimulationResponse,
+    )
+    from backend.app.services.data_loader import get_stadium_sites
 
 
 class ConnectivityEngine:

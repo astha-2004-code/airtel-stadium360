@@ -6,16 +6,28 @@ automated congestion policies, and live simulation.
 """
 from typing import List, Optional
 from fastapi import APIRouter, Query
-from backend.app.schemas.critical_services import (
-    UpiReliabilityKpis,
-    QosSliceDefinition,
-    PaymentHopLatency,
-    SiteUpiTelemetry,
-    CongestionResponsePolicy,
-    CriticalServicesSimulationRequest,
-    CriticalServicesSimulationResponse,
-)
-from backend.app.services.critical_services_engine import critical_services_engine
+try:
+    from app.schemas.critical_services import (
+        UpiReliabilityKpis,
+        QosSliceDefinition,
+        PaymentHopLatency,
+        SiteUpiTelemetry,
+        CongestionResponsePolicy,
+        CriticalServicesSimulationRequest,
+        CriticalServicesSimulationResponse,
+    )
+    from app.services.critical_services_engine import critical_services_engine
+except ImportError:
+    from backend.app.schemas.critical_services import (
+        UpiReliabilityKpis,
+        QosSliceDefinition,
+        PaymentHopLatency,
+        SiteUpiTelemetry,
+        CongestionResponsePolicy,
+        CriticalServicesSimulationRequest,
+        CriticalServicesSimulationResponse,
+    )
+    from backend.app.services.critical_services_engine import critical_services_engine
 
 router = APIRouter()
 

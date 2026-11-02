@@ -6,17 +6,30 @@ Exposes REST APIs for 5G accessibility metrics, EN-DC dual connectivity architec
 """
 from typing import List, Optional
 from fastapi import APIRouter, Query, HTTPException
-from backend.app.schemas.connectivity import (
-    ConnectivityKpis,
-    EndcArchitecture,
-    MassiveMimoSector,
-    CoverageTier,
-    FallbackRootCause,
-    RrmRecommendation,
-    ConnectivitySimulationRequest,
-    ConnectivitySimulationResponse,
-)
-from backend.app.services.connectivity_engine import connectivity_engine
+try:
+    from app.schemas.connectivity import (
+        ConnectivityKpis,
+        EndcArchitecture,
+        MassiveMimoSector,
+        CoverageTier,
+        FallbackRootCause,
+        RrmRecommendation,
+        ConnectivitySimulationRequest,
+        ConnectivitySimulationResponse,
+    )
+    from app.services.connectivity_engine import connectivity_engine
+except ImportError:
+    from backend.app.schemas.connectivity import (
+        ConnectivityKpis,
+        EndcArchitecture,
+        MassiveMimoSector,
+        CoverageTier,
+        FallbackRootCause,
+        RrmRecommendation,
+        ConnectivitySimulationRequest,
+        ConnectivitySimulationResponse,
+    )
+    from backend.app.services.connectivity_engine import connectivity_engine
 
 router = APIRouter()
 

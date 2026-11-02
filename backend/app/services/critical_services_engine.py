@@ -11,16 +11,28 @@ reducing radio-induced transaction failure from 5.8% to 0.12%.
 """
 from typing import Dict, List, Any
 import math
-from backend.app.schemas.critical_services import (
-    UpiReliabilityKpis,
-    QosSliceDefinition,
-    PaymentHopLatency,
-    SiteUpiTelemetry,
-    CongestionResponsePolicy,
-    CriticalServicesSimulationRequest,
-    CriticalServicesSimulationResponse,
-)
-from backend.app.services.data_loader import get_stadium_sites
+try:
+    from app.schemas.critical_services import (
+        UpiReliabilityKpis,
+        QosSliceDefinition,
+        PaymentHopLatency,
+        SiteUpiTelemetry,
+        CongestionResponsePolicy,
+        CriticalServicesSimulationRequest,
+        CriticalServicesSimulationResponse,
+    )
+    from app.services.data_loader import get_stadium_sites
+except ImportError:
+    from backend.app.schemas.critical_services import (
+        UpiReliabilityKpis,
+        QosSliceDefinition,
+        PaymentHopLatency,
+        SiteUpiTelemetry,
+        CongestionResponsePolicy,
+        CriticalServicesSimulationRequest,
+        CriticalServicesSimulationResponse,
+    )
+    from backend.app.services.data_loader import get_stadium_sites
 
 
 class CriticalServicesEngine:
