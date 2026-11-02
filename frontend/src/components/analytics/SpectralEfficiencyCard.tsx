@@ -140,3 +140,4 @@ export const SpectralEfficiencyCard: React.FC<SpectralEfficiencyCardProps> = ({ 
     </div>
   )
 }
+

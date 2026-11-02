@@ -198,3 +198,4 @@ export const GeospatialMapView: React.FC<GeospatialMapViewProps> = ({
     </div>
   )
 }
+

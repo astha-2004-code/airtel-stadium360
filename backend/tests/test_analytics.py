@@ -178,3 +178,4 @@ def test_api_endpoints_direct():
     gap = get_capacity_gap_summary()
     assert gap["required_total_gbps"] == 39.60
     assert gap["backhaul_bottleneck_sites_count"] == 4
+

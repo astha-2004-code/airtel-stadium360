@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header'
 import { DashboardPage } from './pages/DashboardPage'
 import { DigitalTwinPage } from './pages/DigitalTwinPage'
 import { CapacityEnginePage } from './pages/CapacityEnginePage'
+import { OptimizerPage } from './pages/OptimizerPage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -59,6 +60,10 @@ export function App() {
             />
           ) : currentModule === 'demand-capacity' ? (
             <CapacityEnginePage
+              initialCapacity={capacity}
+            />
+          ) : currentModule === 'optimizer' ? (
+            <OptimizerPage
               initialCapacity={capacity}
             />
           ) : (

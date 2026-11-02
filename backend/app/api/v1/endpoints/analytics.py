@@ -140,3 +140,4 @@ def get_capacity_gap_summary(
         "backhaul_bottleneck_sites_count": len([s for s in result["site_breakdowns"] if s["is_backhaul_constrained"]]),
         "recommended_action": "Urgent infrastructure deployment required: add 5G Small Cells in-bowl, deploy COWs, and upgrade Microwave/1G backhaul to 10G Fibre."
     }
+
