@@ -3,6 +3,7 @@ import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardPage } from './pages/DashboardPage'
 import { DigitalTwinPage } from './pages/DigitalTwinPage'
+import { CapacityEnginePage } from './pages/CapacityEnginePage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -55,6 +56,10 @@ export function App() {
             <DigitalTwinPage
               matchPhase={matchPhase}
               refreshTrigger={refreshTrigger}
+            />
+          ) : currentModule === 'demand-capacity' ? (
+            <CapacityEnginePage
+              initialCapacity={capacity}
             />
           ) : (
             <div className="p-12 card-gradient rounded-2xl border border-[#223050] text-center space-y-4">
