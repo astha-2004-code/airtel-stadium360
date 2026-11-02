@@ -8,6 +8,7 @@ import { OptimizerPage } from './pages/OptimizerPage'
 import { SimulatorPage } from './pages/SimulatorPage'
 import { BudgetPage } from './pages/BudgetPage'
 import { ConnectivityPage } from './pages/ConnectivityPage'
+import { CriticalServicesPage } from './pages/CriticalServicesPage'
 
 export function App() {
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
@@ -79,6 +80,10 @@ export function App() {
             />
           ) : currentModule === 'connectivity' ? (
             <ConnectivityPage
+              initialCapacity={capacity}
+            />
+          ) : currentModule === 'critical-services' ? (
+            <CriticalServicesPage
               initialCapacity={capacity}
             />
           ) : (

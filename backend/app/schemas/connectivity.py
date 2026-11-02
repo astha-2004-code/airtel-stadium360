@@ -137,3 +137,4 @@ class ConnectivitySimulationResponse(BaseModel):
     projected_five_g_throughput_gbps: float
     status: str
     engineering_note: str
+

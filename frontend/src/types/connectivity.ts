@@ -123,3 +123,4 @@ export interface ConnectivitySimulationResponse {
   status: string
   engineering_note: string
 }
+

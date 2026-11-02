@@ -84,3 +84,4 @@ def simulate_connectivity(req: ConnectivitySimulationRequest):
     (capacity, anchor PRB reservation %, beam tilt optimization, small cell offload).
     """
     return connectivity_engine.simulate_connectivity(req)
+

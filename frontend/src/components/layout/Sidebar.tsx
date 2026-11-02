@@ -83,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
       name: 'UPI & Emergency',
       description: 'QoS Slice Protection',
       icon: ShieldAlert,
-      status: 'locked',
+      status: 'active',
       badge: 'Module 8',
     },
     {

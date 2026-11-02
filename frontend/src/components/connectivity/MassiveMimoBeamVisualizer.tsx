@@ -216,3 +216,4 @@ export const MassiveMimoBeamVisualizer: React.FC<MassiveMimoBeamVisualizerProps>
     </div>
   )
 }
+

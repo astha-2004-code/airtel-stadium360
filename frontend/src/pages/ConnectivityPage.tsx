@@ -356,3 +356,4 @@ export const ConnectivityPage: React.FC<ConnectivityPageProps> = ({
     </div>
   )
 }
+

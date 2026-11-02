@@ -54,3 +54,4 @@ export const simulateConnectivity = async (
   const resp = await axios.post<ConnectivitySimulationResponse>(`${API_BASE}/simulate`, payload)
   return resp.data
 }
+
