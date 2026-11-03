@@ -180,6 +180,20 @@ class ScenarioEvaluationState(BaseModel):
     budget_remaining_lakhs: float
     composite_health_score: float
     status: str
+    capacity: Optional[int] = None
+    active_users: Optional[int] = None
+    avg_4g_utilization: Optional[float] = None
+    peak_4g_utilization: Optional[float] = None
+    congested_sites: Optional[int] = None
+    congested_sites_pct: Optional[float] = None
+    avg_4g_throughput_mbps: Optional[float] = None
+    avg_5g_throughput_mbps: Optional[float] = None
+    target_throughput_compliance_pct: Optional[float] = None
+    five_g_accessibility_pct: Optional[float] = None
+    total_cost_cr: Optional[float] = None
+    budget_remaining_cr: Optional[float] = None
+    health_rating: Optional[str] = None
+    network_health_score: Optional[float] = None
 
 
 class EvaluationCompareRequest(BaseModel):
@@ -202,4 +216,9 @@ class EvaluationCompareResponse(BaseModel):
     simulated_scenario: ScenarioEvaluationState
     key_improvements: Dict[str, Any]
     newly_infeasible_constraints: List[str]
+    baseline: Optional[ScenarioEvaluationState] = None
+    proposed: Optional[ScenarioEvaluationState] = None
+    simulated: Optional[ScenarioEvaluationState] = None
+    feasibility_status: Optional[str] = None
+    bottleneck_alerts: Optional[List[str]] = None
 
