@@ -648,13 +648,17 @@ class EvaluationEngine:
             status="CRITICAL_CONGESTION",
         )
 
-        # Proposed state (100k standard optimized)
+        # Proposed state (100k standard design target SLA)
+        target_demand_info = calculate_network_demand(capacity=100000)
+        target_demand_val = target_demand_info["throughput_demand_gbps"]["total_demand"]
+        target_required_cap = target_demand_info["capacity_requirements_gbps"]["required_total_at_80_pct"]
+
         proposed_state = ScenarioEvaluationState(
-            scenario_label="Airtel Stadium360 Proposed (Recommended)",
+            scenario_label="Proposed Design Target (Modelled SLA)",
             crowd_capacity=100000,
             active_concurrent_users=7200,
-            throughput_demand_gbps=31.68,
-            deployed_capacity_gbps=39.60,
+            throughput_demand_gbps=target_demand_val,
+            deployed_capacity_gbps=target_required_cap,
             congested_sites_count=0,
             network_utilization_pct=78.4,
             avg_user_throughput_mbps=3.2,
