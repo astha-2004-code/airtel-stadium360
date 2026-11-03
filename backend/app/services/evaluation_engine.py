@@ -646,6 +646,20 @@ class EvaluationEngine:
             budget_remaining_lakhs=400.0,
             composite_health_score=28.4,
             status="CRITICAL_CONGESTION",
+            capacity=65000,
+            active_users=4680,
+            avg_4g_utilization=99.0,
+            peak_4g_utilization=99.1,
+            congested_sites=7,
+            congested_sites_pct=87.5,
+            avg_4g_throughput_mbps=1.0,
+            avg_5g_throughput_mbps=27.91,
+            target_throughput_compliance_pct=22.5,
+            five_g_accessibility_pct=38.5,
+            total_cost_cr=0.0,
+            budget_remaining_cr=4.0,
+            health_rating="CRITICAL",
+            network_health_score=28.4,
         )
 
         # Proposed state (100k standard design target SLA)
@@ -668,6 +682,20 @@ class EvaluationEngine:
             budget_remaining_lakhs=2.50,
             composite_health_score=92.5,
             status="OPTIMAL_COMPLIANT",
+            capacity=100000,
+            active_users=7200,
+            avg_4g_utilization=78.4,
+            peak_4g_utilization=78.4,
+            congested_sites=0,
+            congested_sites_pct=0.0,
+            avg_4g_throughput_mbps=3.2,
+            avg_5g_throughput_mbps=124.6,
+            target_throughput_compliance_pct=98.4,
+            five_g_accessibility_pct=86.2,
+            total_cost_cr=3.975,
+            budget_remaining_cr=0.025,
+            health_rating="OPTIMAL",
+            network_health_score=92.5,
         )
 
         # Dynamic Simulated State using simulation engine
@@ -722,6 +750,7 @@ class EvaluationEngine:
         )))
 
         sim_status = "OPTIMAL_COMPLIANT" if (sim_util <= 80.0 and sim_spend_cr <= 4.0) else "CAPACITY_DEFICIT_FLAGGED" if sim_spend_cr <= 4.0 else "BUDGET_BREACHED"
+        sim_status_rating = "OPTIMAL" if health_score >= 80 else "GOOD" if health_score >= 70 else "FAIR" if health_score >= 50 else "CRITICAL"
 
         simulated_state = ScenarioEvaluationState(
             scenario_label=f"Simulated Scenario ({capacity:,} Crowd)",
@@ -738,6 +767,20 @@ class EvaluationEngine:
             budget_remaining_lakhs=sim_reserve_l,
             composite_health_score=health_score,
             status=sim_status,
+            capacity=capacity,
+            active_users=step2_users,
+            avg_4g_utilization=sim_util,
+            peak_4g_utilization=sim_util,
+            congested_sites=sim_congested,
+            congested_sites_pct=round((sim_congested / 8.0) * 100.0, 1),
+            avg_4g_throughput_mbps=max(1.0, round(3.2 * (100000.0 / max(1, capacity)), 2)) if sim_util > 80 else 3.2,
+            avg_5g_throughput_mbps=max(35.0, round(124.6 * (100000.0 / max(1, capacity)), 1)) if sim_util > 80 else 124.6,
+            target_throughput_compliance_pct=round(max(40.0, min(98.4, 98.4 - (sim_util - 80.0) * 1.8)), 1) if sim_util > 80 else 98.4,
+            five_g_accessibility_pct=sim_camping,
+            total_cost_cr=sim_spend_cr,
+            budget_remaining_cr=round(sim_reserve_l / 100.0, 3),
+            health_rating=sim_status_rating,
+            network_health_score=health_score,
         )
 
         infeasible_list = []
@@ -761,6 +804,11 @@ class EvaluationEngine:
             simulated_scenario=simulated_state,
             key_improvements=key_improvements,
             newly_infeasible_constraints=infeasible_list,
+            baseline=baseline_state,
+            proposed=proposed_state,
+            simulated=simulated_state,
+            feasibility_status=sim_status,
+            bottleneck_alerts=infeasible_list,
         )
 
 
