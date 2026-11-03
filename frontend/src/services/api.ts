@@ -10,6 +10,18 @@ export const apiClient = axios.create({
   timeout: 15000,
 })
 
+// Request interceptor to attach JWT token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('airtel_stadium360_jwt')
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
 // Response interceptor for clear errors
 apiClient.interceptors.response.use(
   (response) => response,
