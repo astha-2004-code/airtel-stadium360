@@ -132,10 +132,10 @@ export const NetworkHealthScorecard: React.FC<NetworkHealthScorecardProps> = ({ 
 
             {/* Weight Breakdown Summary Chips */}
             <div className="grid grid-cols-5 gap-2 pt-1 text-center">
-              {Object.entries(healthScore.component_weights).map(([k, weight]) => (
+              {Object.entries(healthScore?.component_breakdown || {}).map(([k, comp]) => (
                 <div key={k} className="p-2 rounded-lg bg-[#0B0F19]/60 border border-[#223050]/60">
-                  <span className="text-[10px] text-slate-400 uppercase block truncate">{k}</span>
-                  <span className="text-xs font-bold text-white font-mono">{Math.round(weight * 100)}%</span>
+                  <span className="text-[10px] text-slate-400 uppercase block truncate">{k.replace('_', ' ')}</span>
+                  <span className="text-xs font-bold text-white font-mono">{Math.round(comp.weight_pct)}%</span>
                 </div>
               ))}
             </div>
@@ -145,9 +145,11 @@ export const NetworkHealthScorecard: React.FC<NetworkHealthScorecardProps> = ({ 
 
       {/* 5 Component Detail Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {Object.entries(healthScore.components).map(([key, comp]) => {
-          const weightPct = Math.round(comp.weight * 100)
-          const scoreColor = getScoreColor(comp.raw_score)
+        {Object.entries(healthScore?.component_breakdown || {}).map(([key, comp]) => {
+          const weightPct = Math.round(comp.weight_pct)
+          const rawScore = comp.score
+          const scoreColor = getScoreColor(rawScore)
+          const weightedScore = comp.weighted_contribution
 
           return (
             <div
@@ -163,7 +165,7 @@ export const NetworkHealthScorecard: React.FC<NetworkHealthScorecardProps> = ({ 
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                     style={{ backgroundColor: `${scoreColor}20`, color: scoreColor }}
                   >
-                    +{comp.weighted_score.toFixed(1)} pts
+                    +{weightedScore.toFixed(1)} pts
                   </span>
                 </div>
 
@@ -173,7 +175,7 @@ export const NetworkHealthScorecard: React.FC<NetworkHealthScorecardProps> = ({ 
 
                 <div className="flex items-baseline space-x-1.5 my-2">
                   <span className="text-2xl font-black text-white font-mono">
-                    {comp.raw_score.toFixed(1)}
+                    {rawScore.toFixed(1)}
                   </span>
                   <span className="text-[10px] text-slate-400 font-semibold">/ 100</span>
                 </div>
@@ -183,21 +185,21 @@ export const NetworkHealthScorecard: React.FC<NetworkHealthScorecardProps> = ({ 
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
-                      width: `${Math.min(100, Math.max(0, comp.raw_score))}%`,
+                      width: `${Math.min(100, Math.max(0, rawScore))}%`,
                       backgroundColor: scoreColor
                     }}
                   />
                 </div>
 
                 <p className="text-[11px] text-slate-400 mt-2 leading-tight">
-                  {comp.description}
+                  {comp.metric_basis}
                 </p>
               </div>
 
               <div className="pt-3 mt-3 border-t border-[#223050]/60 flex items-center justify-between text-[10px] text-slate-500">
                 <span>Contribution</span>
                 <span className="font-mono font-semibold text-slate-300">
-                  {comp.weighted_score.toFixed(1)} / {weightPct}
+                  {weightedScore.toFixed(1)} / {weightPct}
                 </span>
               </div>
             </div>
