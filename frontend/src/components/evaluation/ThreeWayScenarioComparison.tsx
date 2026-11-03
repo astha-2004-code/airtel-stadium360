@@ -150,7 +150,7 @@ export const ThreeWayScenarioComparison: React.FC<ThreeWayScenarioComparisonProp
               </h3>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Rigorous comparative audit: Unoptimized Baseline (Sync_V1.xlsx) vs Proposed Optimized Network vs Live What-If Scenario
+              Rigorous comparative audit: Measured Baseline (Sync_V1.xlsx) vs Modelled Design Target vs Live Engine Simulation (4 COW + 26 SC)
             </p>
           </div>
 
@@ -170,6 +170,16 @@ export const ThreeWayScenarioComparison: React.FC<ThreeWayScenarioComparisonProp
               )}
               <span>{feasibility_status.replace('_', ' ')}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Engine finding note aligning with slide 5 & 6 */}
+        <div className="mt-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start space-x-2.5 text-xs text-blue-200">
+          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-blue-300">Engine Simulation Finding: </span>
+            The recommended ₹3.975 Cr plan deploys 4 COWs + 26 Small Cells + 4 Overlays, adding +23.82 Gbps (total 29.85 Gbps). 
+            Target 80% SLA requires 39.60 Gbps (9.75 Gbps deficit). Column 2 shows the design target SLA, while Column 3 reflects the live engine simulation output.
           </div>
         </div>
 
@@ -201,28 +211,28 @@ export const ThreeWayScenarioComparison: React.FC<ThreeWayScenarioComparisonProp
                 <th className="p-4 text-slate-300 font-bold uppercase tracking-wider w-1/4 bg-slate-900/60">
                   <div className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                    <span>Baseline Network</span>
+                    <span>Measured Baseline</span>
                   </div>
                   <span className="text-[10px] text-slate-500 font-normal lowercase block">
-                    65,000 spec • unoptimized
+                    65,000 spec • Sync_V1.xlsx
                   </span>
                 </th>
                 <th className="p-4 text-emerald-400 font-bold uppercase tracking-wider w-1/4 bg-emerald-950/20 border-x border-emerald-900/30">
                   <div className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                    <span>Proposed Network</span>
+                    <span>Design Target SLA</span>
                   </div>
                   <span className="text-[10px] text-emerald-400/70 font-normal lowercase block">
-                    100,000 spec • ₹4Cr cap
+                    100,000 spec • target SLA model
                   </span>
                 </th>
                 <th className="p-4 text-cyan-400 font-bold uppercase tracking-wider w-1/4 bg-cyan-950/20">
                   <div className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                    <span>What-If Scenario</span>
+                    <span>Engine Simulation</span>
                   </div>
                   <span className="text-[10px] text-cyan-400/70 font-normal lowercase block">
-                    {simCapacity.toLocaleString()} spec • dynamic
+                    {simCapacity.toLocaleString()} spec • 4 COW + 26 SC
                   </span>
                 </th>
               </tr>
