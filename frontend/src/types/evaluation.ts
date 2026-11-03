@@ -176,6 +176,20 @@ export interface ScenarioEvaluationState {
   budget_remaining_lakhs: number;
   composite_health_score: number;
   status: string;
+  capacity?: number;
+  active_users?: number;
+  avg_4g_utilization?: number;
+  peak_4g_utilization?: number;
+  congested_sites?: number;
+  congested_sites_pct?: number;
+  avg_4g_throughput_mbps?: number;
+  avg_5g_throughput_mbps?: number;
+  target_throughput_compliance_pct?: number;
+  five_g_accessibility_pct?: number;
+  total_cost_cr?: number;
+  budget_remaining_cr?: number;
+  health_rating?: string;
+  network_health_score?: number;
 }
 
 export interface EvaluationCompareRequest {
@@ -203,4 +217,9 @@ export interface EvaluationCompareResponse {
     five_g_camping_gain_pct: number;
   };
   newly_infeasible_constraints: string[];
+  baseline?: ScenarioEvaluationState;
+  proposed?: ScenarioEvaluationState;
+  simulated?: ScenarioEvaluationState;
+  feasibility_status?: string;
+  bottleneck_alerts?: string[];
 }
