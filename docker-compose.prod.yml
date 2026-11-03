@@ -20,7 +20,7 @@ services:
                -c default_statistics_target=100
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-airtel_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airtel_stadium360_secure_pass_2026}
       POSTGRES_DB: ${POSTGRES_DB:-airtel_stadium360}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -77,7 +77,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
       - DEBUG=False
-      - SECRET_KEY=${SECRET_KEY:?Production secret key required}
+      - SECRET_KEY=${SECRET_KEY:-airtel_stadium360_prod_secret_key_2026}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
       - PROJECT_NAME=Airtel Stadium360 API
     ports:

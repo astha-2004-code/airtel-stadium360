@@ -1,0 +1,14 @@
+# Ruff linter configuration
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = [
+    "E9",   # Syntax errors
+    "F63",  # Type comparison tests
+    "F7",   # Syntax & defined tests
+    "F82",  # Undefined variable references
+]
+ignore = [
+    "E501", # Line length handled by formatter
+]
