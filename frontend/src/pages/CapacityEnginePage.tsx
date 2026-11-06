@@ -12,7 +12,9 @@ import {
   ArrowRight,
   TrendingDown,
   Info,
+  Lock,
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import { analyticsService } from '../services/analyticsService'
 import {
   DemandCalculationResponse,
@@ -30,6 +32,7 @@ interface CapacityEnginePageProps {
 }
 
 export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialCapacity = 100000 }) => {
+  const { permissions, quickSwitchDemo } = useAuth()
   // Master Interactive Parameters
   const [capacity, setCapacity] = useState<number>(initialCapacity)
   const [airtelShare, setAirtelShare] = useState<number>(0.40)
@@ -118,12 +121,36 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
 
         <button
           onClick={handleReset}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors self-start sm:self-auto"
+          disabled={permissions.isReadOnly}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Reset Case Study Baseline</span>
         </button>
       </div>
+
+      {/* Read-Only Viewer Notice */}
+      {permissions.isReadOnly && (
+        <div className="p-3.5 rounded-2xl bg-blue-950/40 border border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-blue-900/50 text-blue-400">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white">Read-Only Viewer Mode Active</div>
+              <div className="text-[11px] text-blue-300">
+                Engineering tuning sliders are disabled for the EXECUTIVE_VIEWER persona. Switch to Telecom Engineer to tune live parameters.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => quickSwitchDemo('engineer@airtel.com')}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shrink-0"
+          >
+            Switch to Engineer
+          </button>
+        </div>
+      )}
 
       {/* Parameter Control Panel (Live Recalculation) */}
       <div className="card-gradient rounded-2xl border border-[#223050] p-5 space-y-4">
@@ -150,8 +177,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="130000"
               step="5000"
               value={capacity}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setCapacity(Number(e.target.value))}
-              className="w-full accent-[#E40000] cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-[#E40000] cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>50k (Base)</span>
@@ -172,8 +200,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="0.60"
               step="0.05"
               value={airtelShare}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setAirtelShare(Number(e.target.value))}
-              className="w-full accent-[#E40000] cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-[#E40000] cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>20%</span>
@@ -194,8 +223,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="0.90"
               step="0.05"
               value={deviceShare5G}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setDeviceShare5G(Number(e.target.value))}
-              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>30%</span>
@@ -216,8 +246,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="0.30"
               step="0.01"
               value={peakOnlinePct}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setPeakOnlinePct(Number(e.target.value))}
-              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>8% (Arrival)</span>
@@ -238,8 +269,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="20.0"
               step="1.0"
               value={targetSpeed5G}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setTargetSpeed5G(Number(e.target.value))}
-              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>1 Mbps</span>
@@ -260,8 +292,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="10.0"
               step="0.5"
               value={targetSpeed4G}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setTargetSpeed4G(Number(e.target.value))}
-              className="w-full accent-purple-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-purple-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>1 Mbps</span>
@@ -282,8 +315,9 @@ export const CapacityEnginePage: React.FC<CapacityEnginePageProps> = ({ initialC
               max="0.95"
               step="0.05"
               value={targetUtilization}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setTargetUtilization(Number(e.target.value))}
-              className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>50%</span>

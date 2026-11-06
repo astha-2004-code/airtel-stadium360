@@ -1,7 +1,7 @@
 """
-Airtel Stadium360 - Authentication Service
+Airtel Stadium360 - Authentication & User Management Service
 Handles user registration, credential verification, JWT token issuance,
-demo user seeding, and role-based permissions.
+demo user seeding, role governance, and profile updates.
 """
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -16,7 +16,7 @@ from app.schemas.auth import UserCreate, UserLogin, UserProfileUpdate
 Base.metadata.create_all(bind=engine)
 
 
-# Demo user configurations
+# Standard competition judge demonstration personas
 DEMO_USERS = [
     {
         "email": "admin@airtel.com",
@@ -49,7 +49,10 @@ DEMO_USERS = [
 
 
 def seed_demo_users_if_needed(db: Session):
-    """Seeds the 3 standard demo users for evaluation if not present."""
+    """
+    Seeds and continuously synchronizes the 3 standard demo users.
+    Guarantees canonical credentials and roles match competition requirements.
+    """
     for demo in DEMO_USERS:
         existing = db.query(User).filter(User.email == demo["email"]).first()
         if not existing:
@@ -66,6 +69,24 @@ def seed_demo_users_if_needed(db: Session):
                 created_at=datetime.now(timezone.utc),
             )
             db.add(user)
+        else:
+            # Sync role and superuser status if database drifted
+            needs_update = False
+            if existing.role != demo["role"]:
+                existing.role = demo["role"]
+                needs_update = True
+            if existing.is_superuser != demo.get("is_superuser", False):
+                existing.is_superuser = demo.get("is_superuser", False)
+                needs_update = True
+            if not existing.is_active:
+                existing.is_active = True
+                needs_update = True
+            # Verify password hash works; rehash if needed
+            if not verify_password(demo["password"], existing.hashed_password):
+                existing.hashed_password = get_password_hash(demo["password"])
+                needs_update = True
+            if needs_update:
+                db.add(existing)
     db.commit()
 
 
@@ -73,7 +94,7 @@ class AuthService:
     """Manages user state, authentication workflows, and token generation."""
 
     def __init__(self):
-        # Seed demo users on startup
+        # Seed demo users on service instantiation
         db = SessionLocal()
         try:
             seed_demo_users_if_needed(db)
@@ -96,7 +117,7 @@ class AuthService:
             department=user_in.department or "Airtel Network Operations Centre (NOC)",
             phone=user_in.phone,
             is_active=True,
-            is_superuser=False,
+            is_superuser=user_in.role == "NETWORK_ADMIN",
             created_at=datetime.now(timezone.utc),
         )
         db.add(user)
@@ -111,7 +132,7 @@ class AuthService:
         if not verify_password(login_data.password, user.hashed_password):
             return None
         
-        # Update last login
+        # Update last login timestamp
         user.last_login = datetime.now(timezone.utc)
         db.commit()
         db.refresh(user)
@@ -124,6 +145,13 @@ class AuthService:
             user.department = update_data.department
         if update_data.phone is not None:
             user.phone = update_data.phone
+        db.commit()
+        db.refresh(user)
+        return user
+
+    def update_role(self, db: Session, user: User, new_role: str) -> User:
+        user.role = new_role
+        user.is_superuser = (new_role == "NETWORK_ADMIN")
         db.commit()
         db.refresh(user)
         return user

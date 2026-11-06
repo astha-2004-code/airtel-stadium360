@@ -1,10 +1,11 @@
 """
 Airtel Stadium360 — Scenario Simulator API Endpoints
+Provides real-time mathematical cascade modeling for match scenarios and parameter tuning.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from typing_extensions import Annotated
-from fastapi import APIRouter, Query, Body
+from fastapi import APIRouter, Query, Body, Depends
 
 from app.schemas.simulator import (
     SimulationRequest,
@@ -18,8 +19,11 @@ from app.services.simulator_engine import (
     compare_scenarios,
     get_preset_scenarios,
 )
+from app.api.deps import get_current_engineer_or_admin
+from app.models.user import User
 
 router = APIRouter()
+
 
 @router.get("/simulate", response_model=SimulationResponse)
 def get_simulate_scenario(
@@ -54,12 +58,15 @@ def get_simulate_scenario(
         five_g_overlays_count=five_g_overlays_count,
     )
 
+
 @router.post("/simulate", response_model=SimulationResponse)
 def post_simulate_scenario(
-    payload: SimulationRequest = Body(...)
+    payload: SimulationRequest = Body(...),
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
 ) -> Dict[str, Any]:
     """
     Executes live scenario simulation with 10-step mathematical cascade via JSON body.
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return simulate_network_scenario(
         capacity=payload.capacity,
@@ -76,17 +83,21 @@ def post_simulate_scenario(
         five_g_overlays_count=payload.five_g_overlays_count,
     )
 
+
 @router.post("/compare", response_model=ComparisonResponse)
 def post_compare_scenarios(
-    payload: SimulationComparisonRequest = Body(...)
+    payload: SimulationComparisonRequest = Body(...),
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
 ) -> Dict[str, Any]:
     """
     Compares baseline and simulated scenarios side-by-side, returning metric deltas.
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return compare_scenarios(
         baseline_params=payload.baseline.model_dump(),
         simulated_params=payload.simulated.model_dump(),
     )
+
 
 @router.get("/presets", response_model=List[PresetScenario])
 def get_presets() -> List[Dict[str, Any]]:
@@ -94,4 +105,3 @@ def get_presets() -> List[Dict[str, Any]]:
     Returns built-in preset scenarios (World Cup Final, 120k Super Crowd, IPL High 5G, Rain Delay, Low Budget).
     """
     return get_preset_scenarios()
-

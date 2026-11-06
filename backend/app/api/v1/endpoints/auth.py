@@ -1,7 +1,7 @@
 """
 Airtel Stadium360 - Authentication & User Management Endpoints
 Exposes REST APIs for user registration, login, JWT token issuance, profile updates,
-role verification, and demo account switching.
+role verification, permissions matrix, and demo account switching.
 """
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,9 +11,11 @@ from app.core.database import get_db
 from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.auth import (
+    RoleUpdateRequest,
     Token,
     UserCreate,
     UserLogin,
+    UserPermissionsResponse,
     UserProfileUpdate,
     UserResponse,
 )
@@ -58,7 +60,7 @@ def login_user(
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive. Please contact your Airtel NOC administrator."
         )
     
@@ -89,6 +91,33 @@ def update_current_user_profile(
     return UserResponse.model_validate(updated_user)
 
 
+@router.get("/permissions", response_model=UserPermissionsResponse)
+def get_current_user_permissions(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns the dynamic RBAC permissions matrix for the currently authenticated user.
+    """
+    is_admin = current_user.role == "NETWORK_ADMIN" or current_user.is_superuser
+    is_engineer = current_user.role in ["NETWORK_ADMIN", "TELECOM_ENGINEER"] or current_user.is_superuser
+    is_viewer = current_user.role == "EXECUTIVE_VIEWER" and not current_user.is_superuser
+
+    return UserPermissionsResponse(
+        role=current_user.role,
+        is_superuser=current_user.is_superuser,
+        permissions={
+            "can_manage_users": is_admin,
+            "can_approve_budgets": is_admin,
+            "can_modify_network_config": is_engineer,
+            "can_execute_simulations": is_engineer,
+            "can_run_optimizer": is_engineer,
+            "can_view_dashboards": True,
+            "can_download_reports": True,
+            "is_read_only": is_viewer,
+        }
+    )
+
+
 @router.post("/logout")
 def logout_user():
     """Confirms session invalidation."""
@@ -102,9 +131,33 @@ def list_system_users(
     db: Session = Depends(get_db),
     admin_user: User = Depends(get_current_admin)
 ):
-    """Lists registered users (Restricted to NETWORK_ADMIN role)."""
+    """Lists registered users (Strictly restricted to NETWORK_ADMIN role)."""
     users = auth_service.list_users(db, skip=skip, limit=limit)
     return [UserResponse.model_validate(u) for u in users]
+
+
+@router.put("/users/{user_id}/role", response_model=UserResponse)
+def update_user_role(
+    user_id: int,
+    payload: RoleUpdateRequest,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin)
+):
+    """Updates a registered user's role and permissions (Strictly restricted to NETWORK_ADMIN role)."""
+    valid_roles = ["NETWORK_ADMIN", "TELECOM_ENGINEER", "EXECUTIVE_VIEWER"]
+    if payload.role not in valid_roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid role '{payload.role}'. Must be one of: {', '.join(valid_roles)}"
+        )
+    user = auth_service.get_by_id(db, user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User account not found."
+        )
+    updated = auth_service.update_role(db, user=user, new_role=payload.role)
+    return UserResponse.model_validate(updated)
 
 
 @router.get("/demo-accounts")
@@ -117,11 +170,11 @@ def get_demo_accounts():
             "role": u["role"],
             "department": u["department"],
             "description": (
-                "Full operational administrator with budget override and network policy governance"
+                "Full operational administrator with budget approval, user management, and network policy governance"
                 if u["role"] == "NETWORK_ADMIN"
-                else "Specialized RF engineer with 5G beamforming and capacity planning permissions"
+                else "Specialized RF engineer with 5G beamforming, capacity planning, and simulation permissions"
                 if u["role"] == "TELECOM_ENGINEER"
-                else "Executive stadium inspector with read-only dashboard and audit report access"
+                else "Executive stadium inspector with read-only dashboard, KPI scorecard, and audit report access"
             ),
         }
         for u in DEMO_USERS

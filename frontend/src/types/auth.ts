@@ -17,6 +17,17 @@ export interface User {
   last_login?: string
 }
 
+export interface RolePermissions {
+  canManageUsers: boolean
+  canApproveBudgets: boolean
+  canModifyNetworkConfig: boolean
+  canExecuteSimulations: boolean
+  canRunOptimizer: boolean
+  canViewDashboards: boolean
+  canDownloadReports: boolean
+  isReadOnly: boolean
+}
+
 export interface LoginCredentials {
   email: string
   password: string

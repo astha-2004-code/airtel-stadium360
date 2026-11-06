@@ -5,7 +5,10 @@ Exposes REST APIs for 5G accessibility metrics, EN-DC dual connectivity architec
 4G fallback root-cause diagnostics, and Radio Resource Management (RRM) optimization.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
+from app.api.deps import get_current_engineer_or_admin
+from app.models.user import User
+
 try:
     from app.schemas.connectivity import (
         ConnectivityKpis,
@@ -91,10 +94,12 @@ def get_rrm_recommendations():
 
 
 @router.post("/simulate", response_model=ConnectivitySimulationResponse)
-def simulate_connectivity(req: ConnectivitySimulationRequest):
+def simulate_connectivity(
+    req: ConnectivitySimulationRequest,
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
+):
     """
-    Simulates 5G connectivity performance under variable operational inputs
-    (capacity, anchor PRB reservation %, beam tilt optimization, small cell offload).
+    Simulates 5G connectivity performance under variable operational inputs.
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return connectivity_engine.simulate_connectivity(req)
-

@@ -14,17 +14,24 @@ import {
   ShieldCheck,
   FileCode,
   Terminal,
+  Eye,
+  Wrench,
+  XCircle,
+  RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { DemoAccount, User as UserType } from '../types/auth'
-import { getDemoAccounts } from '../services/authService'
+import { DemoAccount, User as UserType, UserRole } from '../types/auth'
+import { getDemoAccounts, listUsers, updateUserRole } from '../services/authService'
 import { AuthModal } from '../components/auth/AuthModal'
 
 export const AuthManagementPage: React.FC = () => {
-  const { user, token, role, logout, quickSwitchDemo } = useAuth()
+  const { user, token, role, logout, quickSwitchDemo, permissions } = useAuth()
   const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([])
+  const [systemUsers, setSystemUsers] = useState<UserType[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'personas' | 'token' | 'rbac'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'personas' | 'token' | 'rbac' | 'users'>('overview')
+  const [roleUpdateMsg, setRoleUpdateMsg] = useState<string | null>(null)
 
   useEffect(() => {
     const loadDemos = async () => {
@@ -37,6 +44,36 @@ export const AuthManagementPage: React.FC = () => {
     }
     loadDemos()
   }, [])
+
+  // Load system users if admin
+  useEffect(() => {
+    if (permissions.canManageUsers && activeTab === 'users') {
+      const fetchUsers = async () => {
+        setIsLoadingUsers(true)
+        try {
+          const users = await listUsers()
+          setSystemUsers(users)
+        } catch (err) {
+          console.error('Failed to load system users:', err)
+        } finally {
+          setIsLoadingUsers(false)
+        }
+      }
+      fetchUsers()
+    }
+  }, [permissions.canManageUsers, activeTab])
+
+  const handleRoleChange = async (userId: number, newRole: UserRole) => {
+    try {
+      const updated = await updateUserRole(userId, newRole)
+      setSystemUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)))
+      setRoleUpdateMsg(`Successfully updated ${updated.full_name}'s role to ${newRole}`)
+      setTimeout(() => setRoleUpdateMsg(null), 4000)
+    } catch (err: any) {
+      setRoleUpdateMsg(err?.response?.data?.detail || 'Failed to update user role.')
+      setTimeout(() => setRoleUpdateMsg(null), 4000)
+    }
+  }
 
   // Decode token payload for interactive visualizer
   let decodedPayload: any = null
@@ -52,10 +89,134 @@ export const AuthManagementPage: React.FC = () => {
   }
 
   const roleColors: Record<string, string> = {
-    NETWORK_ADMIN: 'bg-red-500/10 text-[#E40000] border-red-500/30',
+    NETWORK_ADMIN: 'bg-red-500/10 text-[#FF4D4D] border-red-500/30',
     TELECOM_ENGINEER: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
     EXECUTIVE_VIEWER: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   }
+
+  // Complete 11-module + operational capabilities RBAC Matrix data
+  const rbacMatrixItems = [
+    {
+      category: 'Application Modules',
+      capability: 'M1: Command Centre (Live Network Overview)',
+      admin: 'Full Access (Live)',
+      engineer: 'Full Access (Live)',
+      viewer: 'Read-Only Access',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M2: Digital Twin (8-Site Stadium Topology)',
+      admin: 'Full Access (Live)',
+      engineer: 'Full Access (Live)',
+      viewer: 'Read-Only Access',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M3: Capacity Engine & Spectral Analysis',
+      admin: 'Full Access (Live)',
+      engineer: 'Full Access (Live)',
+      viewer: 'Read-Only (Fixed SLA)',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M4: Deployment Optimizer (SciPy MILP)',
+      admin: 'Full Solver & Dispatch',
+      engineer: 'Full Solver Tuning',
+      viewer: 'Restricted (Locked)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M5: What-If Live Scenario Simulator',
+      admin: 'Full 10-Step Cascade',
+      engineer: 'Full 10-Step Cascade',
+      viewer: 'Restricted (Locked)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M6: Budget & Asset Allocator (₹4 Cr Cap)',
+      admin: 'Full Approval & Commit',
+      engineer: 'Simulation Only',
+      viewer: 'Restricted (Locked)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M7: 5G Intelligence & Anchor Shield',
+      admin: 'Full Beam & RRM',
+      engineer: 'Full Beam & RRM',
+      viewer: 'Restricted (Locked)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M8: Critical Services & UPI QoS Slicing',
+      admin: 'Full Slice Pre-emption',
+      engineer: 'Full Slice Tuning',
+      viewer: 'Restricted (Locked)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M9: Identity, RBAC & JWT Security',
+      admin: 'Full User Management',
+      engineer: 'Self Profile & Inspector',
+      viewer: 'Self Profile & Inspector',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'M10: Reports & Export Engine',
+      admin: 'All PDF & CSV Exports',
+      engineer: 'All PDF & CSV Exports',
+      viewer: 'Download Permitted Reports',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Application Modules',
+      capability: 'Evaluation Centre (Audit Scorecard)',
+      admin: 'Full Audit Analysis',
+      engineer: 'Full Technical Audit',
+      viewer: 'Read-Only KPI Audit',
+      viewerRestricted: false,
+    },
+    {
+      category: 'Governance Operations',
+      capability: 'User Provisioning & Role Re-assignment',
+      admin: 'Authorized (Admin Only)',
+      engineer: 'Restricted (HTTP 403)',
+      viewer: 'Restricted (HTTP 403)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Governance Operations',
+      capability: '₹4.00 Crore Budget Cap Final Approval',
+      admin: 'Authorized (Admin Only)',
+      engineer: 'Restricted (HTTP 403)',
+      viewer: 'Restricted (HTTP 403)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Governance Operations',
+      capability: 'Live HetNet Dispatch & COW Re-allocation',
+      admin: 'Authorized',
+      engineer: 'Authorized',
+      viewer: 'Restricted (HTTP 403)',
+      viewerRestricted: true,
+    },
+    {
+      category: 'Governance Operations',
+      capability: 'Cryptographic SHA-256 PDF Audit Certification',
+      admin: 'Generate & Sign',
+      engineer: 'Generate & Sign',
+      viewer: 'Verify & Download',
+      viewerRestricted: false,
+    },
+  ]
 
   return (
     <div className="space-y-6 pb-12">
@@ -98,14 +259,6 @@ export const AuthManagementPage: React.FC = () => {
               Judge Personas
             </button>
             <button
-              onClick={() => setActiveTab('token')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'token' ? 'bg-[#E40000] text-white shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              JWT Inspector
-            </button>
-            <button
               onClick={() => setActiveTab('rbac')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'rbac' ? 'bg-[#E40000] text-white shadow-md' : 'text-slate-400 hover:text-white'
@@ -113,11 +266,37 @@ export const AuthManagementPage: React.FC = () => {
             >
               RBAC Matrix
             </button>
+            <button
+              onClick={() => setActiveTab('token')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'token' ? 'bg-[#E40000] text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              JWT Inspector
+            </button>
+            {permissions.canManageUsers && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  activeTab === 'users' ? 'bg-[#E40000] text-white shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>User Management</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {roleUpdateMsg && (
+        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{roleUpdateMsg}</span>
+        </div>
+      )}
+
+      {/* Tab: Active Session Overview */}
       {activeTab === 'overview' && user && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* User Hero Card */}
@@ -167,15 +346,56 @@ export const AuthManagementPage: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-[#0B0F19] border border-slate-800 space-y-1">
                 <div className="text-[10px] uppercase font-bold text-slate-400">Security Clearance</div>
                 <div className="text-xs font-bold text-emerald-400">
-                  {user.is_superuser ? 'Superuser Level 1 (Full Access)' : 'Standard Operator Tier'}
+                  {user.is_superuser ? 'Superuser Tier 1 (Full Operational Authority)' : `${user.role} Clearance`}
                 </div>
               </div>
               <div className="p-3.5 rounded-xl bg-[#0B0F19] border border-slate-800 space-y-1">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Session Issued At</div>
-                <div className="text-xs font-mono text-slate-300">
-                  {decodedPayload?.iat
-                    ? new Date(decodedPayload.iat * 1000).toLocaleTimeString()
-                    : new Date().toLocaleTimeString()}
+                <div className="text-[10px] uppercase font-bold text-slate-400">Permissions State</div>
+                <div className="text-xs font-bold text-white">
+                  {permissions.isReadOnly ? 'Read-Only Mode' : 'Read & Write Mode'}
+                </div>
+              </div>
+            </div>
+
+            {/* Granular Permission Checklist */}
+            <div className="pt-2 border-t border-slate-800 space-y-2">
+              <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                Active Permission Checklist
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                <div className={`p-2 rounded-lg border flex items-center gap-2 ${
+                  permissions.canManageUsers ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {permissions.canManageUsers ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>Manage Users</span>
+                </div>
+                <div className={`p-2 rounded-lg border flex items-center gap-2 ${
+                  permissions.canApproveBudgets ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {permissions.canApproveBudgets ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>Approve Budget</span>
+                </div>
+                <div className={`p-2 rounded-lg border flex items-center gap-2 ${
+                  permissions.canModifyNetworkConfig ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {permissions.canModifyNetworkConfig ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>Modify HetNet Config</span>
+                </div>
+                <div className={`p-2 rounded-lg border flex items-center gap-2 ${
+                  permissions.canExecuteSimulations ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {permissions.canExecuteSimulations ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>Run Simulations</span>
+                </div>
+                <div className={`p-2 rounded-lg border flex items-center gap-2 ${
+                  permissions.canRunOptimizer ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {permissions.canRunOptimizer ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <XCircle className="w-3.5 h-3.5 text-slate-600" />}
+                  <span>Run MILP Solver</span>
+                </div>
+                <div className="p-2 rounded-lg border bg-emerald-950/20 border-emerald-500/30 text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Download Reports</span>
                 </div>
               </div>
             </div>
@@ -186,12 +406,12 @@ export const AuthManagementPage: React.FC = () => {
             <div className="space-y-2">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Cryptographic Guardrails</span>
+                <span>Enterprise Guardrails</span>
               </div>
-              <h4 className="text-sm font-bold text-white">Zero Hardcoded Secrets Enforced</h4>
+              <h4 className="text-sm font-bold text-white">Cryptographically Signed RBAC</h4>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Tokens are signed via HMAC-SHA256 using secrets ingested from secure environment variables.
-                Passwords hashed with 12-round bcrypt salts.
+                Tokens are signed via HMAC-SHA256 with role claims validated on every backend REST request.
+                Unauthorized endpoints return HTTP 403 Forbidden.
               </p>
             </div>
 
@@ -205,14 +425,18 @@ export const AuthManagementPage: React.FC = () => {
                 <span className="font-mono font-bold text-emerald-400">24 Hours</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Hashing Rounds:</span>
-                <span className="font-mono font-bold text-white">12 Salt Rounds</span>
+                <span className="text-slate-400">Password Encryption:</span>
+                <span className="font-mono font-bold text-white">Bcrypt (12 Rounds)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">RBAC Enforcement:</span>
+                <span className="font-mono font-bold text-emerald-400">FastAPI Dependencies</span>
               </div>
             </div>
 
             <button
               onClick={() => logout()}
-              className="w-full py-2 rounded-xl bg-red-950/20 border border-red-500/30 text-[#E40000] text-xs font-bold hover:bg-red-950/40 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-red-950/20 border border-red-500/30 text-[#FF4D4D] text-xs font-bold hover:bg-red-950/40 transition-colors flex items-center justify-center gap-2"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Terminate Session</span>
@@ -221,13 +445,13 @@ export const AuthManagementPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab: Personas */}
+      {/* Tab: Judge Personas */}
       {activeTab === 'personas' && (
         <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
           <div>
             <h3 className="text-lg font-bold text-white">Evaluation Personas for Competition Judges</h3>
             <p className="text-xs text-slate-400">
-              One-click instant role switching to verify permissions across the entire platform
+              One-click instant role switching to verify RBAC permissions across the entire platform
             </p>
           </div>
 
@@ -250,7 +474,7 @@ export const AuthManagementPage: React.FC = () => {
                       </span>
                       {isCurrent && (
                         <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Active
+                          <CheckCircle2 className="w-3 h-3" /> Active Session
                         </span>
                       )}
                     </div>
@@ -268,7 +492,7 @@ export const AuthManagementPage: React.FC = () => {
                   <button
                     disabled={isCurrent}
                     onClick={() => quickSwitchDemo(d.email)}
-                    className={`w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       isCurrent
                         ? 'bg-slate-800 text-slate-500 cursor-default'
                         : 'bg-[#E40000] text-white hover:bg-red-700 shadow-md shadow-red-900/30'
@@ -284,12 +508,208 @@ export const AuthManagementPage: React.FC = () => {
         </div>
       )}
 
+      {/* Tab: Comprehensive RBAC Matrix */}
+      {activeTab === 'rbac' && (
+        <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <span>Role-Based Access Control (RBAC) Matrix</span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                End-to-end matrix showing permissions across all 11 modules and administrative operations.
+                The highlighted column reflects your active persona.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Your Active Role:</span>
+              <span className={`text-xs font-bold font-mono px-2.5 py-0.5 rounded-full border ${role ? roleColors[role] : ''}`}>
+                {role || 'NONE'}
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 font-mono">
+                  <th className="py-3 px-4 w-2/5">Capability / Module</th>
+                  <th className={`py-3 px-3 text-center transition-colors ${role === 'NETWORK_ADMIN' ? 'bg-red-950/40 text-red-200 border-x border-red-500/30' : ''}`}>
+                    <div className="font-bold">NETWORK_ADMIN</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Sunil Varma</div>
+                    {role !== 'NETWORK_ADMIN' && (
+                      <button
+                        onClick={() => quickSwitchDemo('admin@airtel.com')}
+                        className="mt-1.5 px-2 py-0.5 rounded bg-red-900/40 hover:bg-red-800 text-red-200 text-[10px] font-semibold transition-colors"
+                      >
+                        Switch Role
+                      </button>
+                    )}
+                    {role === 'NETWORK_ADMIN' && (
+                      <span className="mt-1.5 inline-block px-2 py-0.5 rounded bg-red-600 text-white text-[10px] font-bold">
+                        ★ Active Clearance
+                      </span>
+                    )}
+                  </th>
+                  <th className={`py-3 px-3 text-center transition-colors ${role === 'TELECOM_ENGINEER' ? 'bg-emerald-950/40 text-emerald-200 border-x border-emerald-500/30' : ''}`}>
+                    <div className="font-bold">TELECOM_ENGINEER</div>
+                    <div className="text-[10px] text-slate-400 font-normal">Priya Sharma</div>
+                    {role !== 'TELECOM_ENGINEER' && (
+                      <button
+                        onClick={() => quickSwitchDemo('engineer@airtel.com')}
+                        className="mt-1.5 px-2 py-0.5 rounded bg-emerald-900/40 hover:bg-emerald-800 text-emerald-200 text-[10px] font-semibold transition-colors"
+                      >
+                        Switch Role
+                      </button>
+                    )}
+                    {role === 'TELECOM_ENGINEER' && (
+                      <span className="mt-1.5 inline-block px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">
+                        ★ Active Clearance
+                      </span>
+                    )}
+                  </th>
+                  <th className={`py-3 px-3 text-center transition-colors ${role === 'EXECUTIVE_VIEWER' ? 'bg-blue-950/40 text-blue-200 border-x border-blue-500/30' : ''}`}>
+                    <div className="font-bold">EXECUTIVE_VIEWER</div>
+                    <div className="text-[10px] text-slate-400 font-normal">BCCI Stadium Observer</div>
+                    {role !== 'EXECUTIVE_VIEWER' && (
+                      <button
+                        onClick={() => quickSwitchDemo('viewer@airtel.com')}
+                        className="mt-1.5 px-2 py-0.5 rounded bg-blue-900/40 hover:bg-blue-800 text-blue-200 text-[10px] font-semibold transition-colors"
+                      >
+                        Switch Role
+                      </button>
+                    )}
+                    {role === 'EXECUTIVE_VIEWER' && (
+                      <span className="mt-1.5 inline-block px-2 py-0.5 rounded bg-blue-600 text-white text-[10px] font-bold">
+                        ★ Active Clearance
+                      </span>
+                    )}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 font-medium">
+                {rbacMatrixItems.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-slate-900/40 transition-colors">
+                    <td className="py-2.5 px-4 text-white">
+                      <div className="font-semibold">{item.capability}</div>
+                      <div className="text-[10px] text-slate-500">{item.category}</div>
+                    </td>
+                    <td className={`py-2.5 px-3 text-center font-bold text-emerald-400 ${role === 'NETWORK_ADMIN' ? 'bg-red-950/20 border-x border-red-500/30' : ''}`}>
+                      ✓ {item.admin}
+                    </td>
+                    <td className={`py-2.5 px-3 text-center ${
+                      item.engineer.includes('Restricted')
+                        ? 'text-red-400'
+                        : item.engineer.includes('Simulation')
+                        ? 'text-amber-400'
+                        : 'text-emerald-400'
+                    } ${role === 'TELECOM_ENGINEER' ? 'bg-emerald-950/20 border-x border-emerald-500/30' : ''}`}>
+                      {item.engineer.includes('Restricted') ? '✕ ' : '✓ '}
+                      {item.engineer}
+                    </td>
+                    <td className={`py-2.5 px-3 text-center ${
+                      item.viewerRestricted
+                        ? 'text-slate-500 font-normal'
+                        : 'text-blue-400 font-semibold'
+                    } ${role === 'EXECUTIVE_VIEWER' ? 'bg-blue-950/20 border-x border-blue-500/30' : ''}`}>
+                      {item.viewerRestricted ? '✕ ' : '✓ '}
+                      {item.viewer}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: User Management (Admin Only) */}
+      {activeTab === 'users' && permissions.canManageUsers && (
+        <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#FF4D4D]" />
+                <span>Enterprise User & Role Governance</span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Administrative view to inspect active user accounts and modify permissions live.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                setIsLoadingUsers(true)
+                try {
+                  const users = await listUsers()
+                  setSystemUsers(users)
+                } finally {
+                  setIsLoadingUsers(false)
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+              <span>Refresh Users</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 font-mono">
+                  <th className="py-3 px-4">User</th>
+                  <th className="py-3 px-3">Department</th>
+                  <th className="py-3 px-3">Active Role</th>
+                  <th className="py-3 px-3">Superuser</th>
+                  <th className="py-3 px-3">Change Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 font-medium">
+                {systemUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-900/40 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="font-bold text-white">{u.full_name}</div>
+                      <div className="text-[10px] font-mono text-slate-400">{u.email}</div>
+                    </td>
+                    <td className="py-3 px-3 text-slate-300">{u.department}</td>
+                    <td className="py-3 px-3">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleColors[u.role]}`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3">
+                      {u.is_superuser ? (
+                        <span className="text-emerald-400 font-bold">Yes (Admin)</span>
+                      ) : (
+                        <span className="text-slate-500">No</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3">
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-red-500 cursor-pointer"
+                      >
+                        <option value="NETWORK_ADMIN">NETWORK_ADMIN</option>
+                        <option value="TELECOM_ENGINEER">TELECOM_ENGINEER</option>
+                        <option value="EXECUTIVE_VIEWER">EXECUTIVE_VIEWER</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Tab: Token Inspector */}
       {activeTab === 'token' && (
         <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileCode className="w-5 h-5 text-[#E40000]" />
+              <FileCode className="w-5 h-5 text-[#FF4D4D]" />
               <span>Live JWT Token Inspector</span>
             </h3>
             <p className="text-xs text-slate-400">
@@ -328,63 +748,6 @@ export const AuthManagementPage: React.FC = () => {
                 </pre>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab: RBAC Matrix */}
-      {activeTab === 'rbac' && (
-        <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
-          <div>
-            <h3 className="text-lg font-bold text-white">Role-Based Access Control (RBAC) Permission Matrix</h3>
-            <p className="text-xs text-slate-400">
-              Fine-grained operation governance enforced by FastAPI dependencies
-            </p>
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-900/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 font-mono">
-                  <th className="py-3 px-4">System Capability</th>
-                  <th className="py-3 px-3 text-center">NETWORK_ADMIN</th>
-                  <th className="py-3 px-3 text-center">TELECOM_ENGINEER</th>
-                  <th className="py-3 px-3 text-center">EXECUTIVE_VIEWER</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-medium">
-                <tr>
-                  <td className="py-3 px-4 text-white">View Command Centre KPIs & Digital Twin</td>
-                  <td className="py-3 px-3 text-center text-emerald-400">✓ Full</td>
-                  <td className="py-3 px-3 text-center text-emerald-400">✓ Full</td>
-                  <td className="py-3 px-3 text-center text-emerald-400">✓ Full</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 text-white">Execute What-If Live Simulator Scenarios</td>
-                  <td className="py-3 px-3 text-center text-emerald-400">✓ Full</td>
-                  <td className="py-3 px-3 text-center text-emerald-400">✓ Full</td>
-                  <td className="py-3 px-3 text-center text-slate-500">— Read Only</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 text-white">Modify ₹4 Cr Cap Budget & Asset Allocation</td>
-                  <td className="py-3 px-3 text-center text-emerald-400 font-bold">✓ Authorized</td>
-                  <td className="py-3 px-3 text-center text-amber-400">Simulation Only</td>
-                  <td className="py-3 px-3 text-center text-slate-500">— Restricted</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 text-white">Adjust 64T64R Beamforming & RRM Policies</td>
-                  <td className="py-3 px-3 text-center text-emerald-400 font-bold">✓ Authorized</td>
-                  <td className="py-3 px-3 text-center text-emerald-400 font-bold">✓ Authorized</td>
-                  <td className="py-3 px-3 text-center text-slate-500">— Restricted</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 text-white">Emergency Call Pre-emption & QoS Override</td>
-                  <td className="py-3 px-3 text-center text-emerald-400 font-bold">✓ Authorized</td>
-                  <td className="py-3 px-3 text-center text-slate-500">— Restricted</td>
-                  <td className="py-3 px-3 text-center text-slate-500">— Restricted</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       )}

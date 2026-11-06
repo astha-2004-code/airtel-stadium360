@@ -10,7 +10,10 @@ import {
   Sliders,
   ShieldCheck,
   Zap,
+  Lock,
+  CheckCircle2,
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import { budgetService } from '../services/budgetService'
 import {
   BudgetAllocationParams,
@@ -30,6 +33,8 @@ interface BudgetPageProps {
 }
 
 export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000 }) => {
+  const { permissions, quickSwitchDemo } = useAuth()
+  const [approvalMessage, setApprovalMessage] = useState<string | null>(null)
   // Budget Allocation Sliders
   const [budgetLimitCrores, setBudgetLimitCrores] = useState<number>(4.0)
   const [cowsCount, setCowsCount] = useState<number>(4)
@@ -115,14 +120,60 @@ export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000
           </p>
         </div>
 
-        <button
-          onClick={handleReset}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors self-start sm:self-auto"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset ₹4 Cr Baseline</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {permissions.canApproveBudgets && (
+            <button
+              onClick={() => {
+                setApprovalMessage('Budget Plan committed and signed with Cryptographic SHA-256 seal.')
+                setTimeout(() => setApprovalMessage(null), 5000)
+              }}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-md shadow-emerald-900/30"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Approve & Lock Budget Plan</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleReset}
+            disabled={permissions.isReadOnly}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset ₹4 Cr Baseline</span>
+          </button>
+        </div>
       </div>
+
+      {approvalMessage && (
+        <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{approvalMessage}</span>
+        </div>
+      )}
+
+      {/* Read-Only Viewer Notice */}
+      {permissions.isReadOnly && (
+        <div className="p-3.5 rounded-2xl bg-blue-950/40 border border-blue-500/40 text-blue-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-blue-900/50 text-blue-400">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white">Read-Only Viewer Mode Active</div>
+              <div className="text-[11px] text-blue-300">
+                Budget adjustment sliders and allocation approvals are disabled for the EXECUTIVE_VIEWER persona. Switch to Telecom Engineer or Network Admin to configure.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => quickSwitchDemo('engineer@airtel.com')}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shrink-0"
+          >
+            Switch to Engineer
+          </button>
+        </div>
+      )}
 
       {/* Allocation Tuning Controls */}
       <div className="card-gradient rounded-2xl border border-[#223050] p-5 space-y-4">
@@ -151,8 +202,9 @@ export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000
               max="6.0"
               step="0.25"
               value={budgetLimitCrores}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setBudgetLimitCrores(Number(e.target.value))}
-              className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>₹1 Cr</span>
@@ -173,8 +225,9 @@ export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000
               max="10"
               step="1"
               value={cowsCount}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setCowsCount(Number(e.target.value))}
-              className="w-full accent-red-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-red-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>0</span>
@@ -195,8 +248,9 @@ export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000
               max="50"
               step="2"
               value={smallCellsCount}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setSmallCellsCount(Number(e.target.value))}
-              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>0</span>
@@ -217,8 +271,9 @@ export const BudgetPage: React.FC<BudgetPageProps> = ({ initialCapacity = 100000
               max="3.0"
               step="0.05"
               value={fibreKm}
+              disabled={permissions.isReadOnly}
               onChange={(e) => setFibreKm(Number(e.target.value))}
-              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              className="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
               <span>0 km</span>

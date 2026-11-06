@@ -5,7 +5,10 @@ end-to-end payment latency breakdowns, site-by-site merchant telemetry,
 automated congestion policies, and live simulation.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from app.api.deps import get_current_engineer_or_admin
+from app.models.user import User
+
 try:
     from app.schemas.critical_services import (
         UpiReliabilityKpis,
@@ -80,9 +83,12 @@ def get_congestion_policies():
 
 
 @router.post("/simulate", response_model=CriticalServicesSimulationResponse)
-def simulate_critical_services(req: CriticalServicesSimulationRequest):
+def simulate_critical_services(
+    req: CriticalServicesSimulationRequest,
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
+):
     """
     Simulates UPI reliability and emergency service performance under variable operational inputs.
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return critical_services_engine.simulate_critical_services(req)
-

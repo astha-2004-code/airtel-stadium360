@@ -18,7 +18,7 @@
 - **Institution:** National Institute of Technology Delhi (NIT Delhi)
 - **Team Members:**
   - **Astha Jha** ([GitHub: @astha-2004-code](https://github.com/astha-2004-code) • `231220017@nitdelhi.ac.in`)
-  - **Sanya Singh** (`231220050@nitdelhi.ac.in`)
+  - **Sanya Singh** (`231220052@nitdelhi.ac.in`)
 - **Competition:** Airtel SYNC Competition 2026
 
 ---
@@ -447,15 +447,18 @@ npm run dev
 
 ## 11. Role-Based Access Governance
 
-Airtel Stadium360 includes pre-seeded accounts for competition judges to test role-based capabilities:
+Airtel Stadium360 implements strict end-to-end Role-Based Access Control (RBAC) enforced by both FastAPI backend dependencies and dynamic React authorization guards:
 
-| Persona | Email | Password | Role | Permissions |
+| Persona | Email | Password | Role | System & Module Permissions |
 | :--- | :--- | :--- | :--- | :--- |
-| **Network Administrator** | `admin@airtel.com` | `AirtelNoc@2026` | `NETWORK_ADMIN` | Full control, COW dispatch, budget approvals |
-| **Telecom Engineer** | `engineer@airtel.com` | `AirtelRf@2026` | `TELECOM_ENGINEER` | Antenna downtilt, beam steering, QoS tuning |
-| **Competition Judge / Observer** | `viewer@airtel.com` | `AirtelSync@2026` | `EXECUTIVE_VIEWER` | Audit trail, KPI scorecard, PDF/CSV downloads |
+| **Network Administrator** | `admin@airtel.com` | `AirtelNoc@2026` | `NETWORK_ADMIN` | **Full Authority**: Access to all 11 modules, user provisioning & role reassignment, COW/small cell deployment approvals, and final ₹4.00 Cr budget commitment. |
+| **Telecom Engineer** | `engineer@airtel.com` | `AirtelRf@2026` | `TELECOM_ENGINEER` | **Engineering Operations**: Access to RF optimization, 64T64R beam steering, SciPy MILP optimizer, What-If simulator, and QoS slice tuning. Restricted from administrative user management. |
+| **Competition Judge / Observer** | `viewer@airtel.com` | `AirtelSync@2026` | `EXECUTIVE_VIEWER` | **Read-Only Auditor**: Access to Command Centre, Digital Twin, Capacity Engine, Evaluation Scorecards, and cryptographic PDF/CSV audit reports. All tuning sliders and administrative configurations are locked. |
 
-*(You can also use the **1-Click Persona Switcher** inside the navigation bar or Module 9 to switch roles instantly without manual re-login).*
+### RBAC Enforcement Architecture:
+- **Backend**: Protected endpoints enforce `get_current_admin` or `get_current_engineer_or_admin` dependencies, returning `HTTP 401 Unauthorized` for missing/expired tokens and `HTTP 403 Forbidden` for unauthorized role operations.
+- **Frontend**: Dynamic sidebar navigation and `canAccessModule` route guards restrict module access and render an `AccessDeniedView` with instant 1-click elevation for judges upon unauthorized access attempts.
+- **1-Click Persona Switcher**: Available in the top navigation header and Module 9 (Identity & RBAC) allowing evaluation judges to switch personas seamlessly without manual credential re-entry.
 
 ---
 

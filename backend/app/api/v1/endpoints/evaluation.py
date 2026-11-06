@@ -4,7 +4,10 @@ Author: ByteForge | NIT Delhi
 Exposes REST APIs for comprehensive network evaluation, site-wise utilization matrices,
 throughput compliance, 5G accessibility, UPI reliability, and 3-way scenario benchmarking.
 """
-from fastapi import APIRouter, Query
+from typing import Optional
+from fastapi import APIRouter, Query, Depends
+from app.api.deps import get_current_engineer_or_admin
+from app.models.user import User
 from app.schemas.evaluation import (
     EvaluationOverviewResponse,
     NetworkUtilizationMetrics,
@@ -88,12 +91,14 @@ def get_financial_evaluation(
 @router.post("/compare", response_model=EvaluationCompareResponse)
 def compare_evaluation_scenarios(
     request: EvaluationCompareRequest,
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
 ):
     """
     Executes dedicated 3-way evaluation comparing:
     1. Baseline network (65,000 spectators / unoptimized)
     2. Proposed network (100,000 spectators / recommended SLA)
     3. User's dynamic simulated scenario (with real-time what-if parameter tuning)
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return evaluation_engine.compare_scenarios(
         capacity=request.capacity,
@@ -108,4 +113,3 @@ def compare_evaluation_scenarios(
         fibre_distance_km=request.fibre_distance_km,
         five_g_overlays_count=request.five_g_overlays_count,
     )
-

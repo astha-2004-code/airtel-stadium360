@@ -9,6 +9,7 @@ import {
   LoginCredentials,
   RegisterData,
   User,
+  UserRole,
 } from '../types/auth'
 
 const TOKEN_KEY = 'airtel_stadium360_jwt'
@@ -50,6 +51,16 @@ export const updateProfile = async (
   data: Partial<Pick<User, 'full_name' | 'department' | 'phone'>>
 ): Promise<User> => {
   const resp = await apiClient.put<User>('/auth/me', data)
+  return resp.data
+}
+
+export const listUsers = async (): Promise<User[]> => {
+  const resp = await apiClient.get<User[]>('/auth/users')
+  return resp.data
+}
+
+export const updateUserRole = async (userId: number, role: UserRole): Promise<User> => {
+  const resp = await apiClient.put<User>(`/auth/users/${userId}/role`, { role })
   return resp.data
 }
 

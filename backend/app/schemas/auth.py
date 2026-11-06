@@ -1,10 +1,10 @@
 """
 Airtel Stadium360 - Authentication & User Schemas
 Pydantic models for user registration, login credentials, JWT token payloads,
-and profile management.
+role update requests, and granular permissions.
 """
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -31,6 +31,10 @@ class UserProfileUpdate(BaseModel):
     phone: Optional[str] = None
 
 
+class RoleUpdateRequest(BaseModel):
+    role: str = Field(..., description="Target role: NETWORK_ADMIN, TELECOM_ENGINEER, EXECUTIVE_VIEWER")
+
+
 class UserResponse(UserBase):
     id: int
     is_active: bool
@@ -51,3 +55,9 @@ class TokenPayload(BaseModel):
     sub: Optional[str] = None
     role: Optional[str] = None
     exp: Optional[int] = None
+
+
+class UserPermissionsResponse(BaseModel):
+    role: str
+    is_superuser: bool
+    permissions: Dict[str, bool]

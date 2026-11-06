@@ -1,10 +1,11 @@
 """
 Airtel Stadium360 — Optimization API Endpoints
+Computes optimal HetNet deployment mix using SciPy Mixed-Integer Linear Programming (MILP).
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from typing_extensions import Annotated
-from fastapi import APIRouter, Query, Body
+from fastapi import APIRouter, Query, Body, Depends
 
 from app.schemas.optimizer import (
     OptimizationRequest,
@@ -13,8 +14,11 @@ from app.schemas.optimizer import (
     CostBreakdownLakhs,
 )
 from app.services.optimizer_engine import optimize_stadium_network
+from app.api.deps import get_current_engineer_or_admin
+from app.models.user import User
 
 router = APIRouter()
+
 
 @router.get("/recommended", response_model=OptimizationResponse)
 def get_recommended_optimization(
@@ -46,12 +50,15 @@ def get_recommended_optimization(
         max_small_cells_allowed=max_small_cells_allowed,
     )
 
+
 @router.post("/optimize", response_model=OptimizationResponse)
 def post_custom_optimization(
-    payload: OptimizationRequest = Body(...)
+    payload: OptimizationRequest = Body(...),
+    current_user: Optional[User] = Depends(get_current_engineer_or_admin)
 ) -> Dict[str, Any]:
     """
     Executes SciPy MILP optimization with customized constraints and parameters via POST body.
+    Restricted to TELECOM_ENGINEER and NETWORK_ADMIN personas.
     """
     return optimize_stadium_network(
         budget_limit_crores=payload.budget_limit_crores,
@@ -65,6 +72,7 @@ def post_custom_optimization(
         max_cows_allowed=payload.max_cows_allowed,
         max_small_cells_allowed=payload.max_small_cells_allowed,
     )
+
 
 @router.get("/site-recommendations", response_model=List[SiteIntervention])
 def get_site_recommendations(
@@ -80,6 +88,7 @@ def get_site_recommendations(
     )
     return result["site_interventions"]
 
+
 @router.get("/cost-breakdown", response_model=CostBreakdownLakhs)
 def get_cost_breakdown(
     budget_limit_crores: Annotated[float, Query(description="Budget cap in Crores INR")] = 4.0,
@@ -93,4 +102,3 @@ def get_cost_breakdown(
         capacity=capacity,
     )
     return result["cost_breakdown_lakhs"]
-
