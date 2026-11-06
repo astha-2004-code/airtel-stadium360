@@ -18,10 +18,14 @@ import {
   Wrench,
   XCircle,
   RefreshCw,
+  Search,
+  Power,
+  Ban,
+  Check,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { DemoAccount, User as UserType, UserRole } from '../types/auth'
-import { getDemoAccounts, listUsers, updateUserRole } from '../services/authService'
+import { getDemoAccounts, listUsers, updateUserRole, updateUserStatus } from '../services/authService'
 import { AuthModal } from '../components/auth/AuthModal'
 
 export const AuthManagementPage: React.FC = () => {
@@ -32,6 +36,9 @@ export const AuthManagementPage: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'personas' | 'token' | 'rbac' | 'users'>('overview')
   const [roleUpdateMsg, setRoleUpdateMsg] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [roleFilter, setRoleFilter] = useState<string>('ALL')
+  const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
   useEffect(() => {
     const loadDemos = async () => {
@@ -74,6 +81,38 @@ export const AuthManagementPage: React.FC = () => {
       setTimeout(() => setRoleUpdateMsg(null), 4000)
     }
   }
+
+  const handleStatusToggle = async (targetUser: UserType) => {
+    try {
+      const updated = await updateUserStatus(targetUser.id, !targetUser.is_active)
+      setSystemUsers((prev) => prev.map((u) => (u.id === targetUser.id ? updated : u)))
+      setRoleUpdateMsg(
+        `Account for ${updated.full_name} is now ${updated.is_active ? 'ACTIVE' : 'DEACTIVATED'}`
+      )
+      setTimeout(() => setRoleUpdateMsg(null), 4000)
+    } catch (err: any) {
+      setRoleUpdateMsg(err?.response?.data?.detail || 'Failed to update user status.')
+      setTimeout(() => setRoleUpdateMsg(null), 4000)
+    }
+  }
+
+  const activeAdminCount = systemUsers.filter(
+    (u) => u.role === 'NETWORK_ADMIN' && u.is_active
+  ).length
+
+  const filteredUsers = systemUsers.filter((u) => {
+    const matchesSearch =
+      searchTerm.trim() === '' ||
+      u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.department.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'ACTIVE' && u.is_active) ||
+      (statusFilter === 'INACTIVE' && !u.is_active)
+    return matchesSearch && matchesRole && matchesStatus
+  })
 
   // Decode token payload for interactive visualizer
   let decodedPayload: any = null
@@ -625,83 +664,217 @@ export const AuthManagementPage: React.FC = () => {
       )}
 
       {/* Tab: User Management (Admin Only) */}
-      {activeTab === 'users' && permissions.canManageUsers && (
-        <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#FF4D4D]" />
-                <span>Enterprise User & Role Governance</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                Administrative view to inspect active user accounts and modify permissions live.
-              </p>
-            </div>
-            <button
-              onClick={async () => {
-                setIsLoadingUsers(true)
-                try {
-                  const users = await listUsers()
-                  setSystemUsers(users)
-                } finally {
-                  setIsLoadingUsers(false)
-                }
-              }}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
-              <span>Refresh Users</span>
-            </button>
-          </div>
+      {activeTab === 'users' && (
+        <>
+          {permissions.canManageUsers ? (
+            <div className="p-6 rounded-2xl bg-[#131B2E] border border-[#223050] space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#FF4D4D]" />
+                    <span>Enterprise User & Role Governance</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Administrator console to search, promote, deactivate, and govern registered users across Airtel Stadium360.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setIsLoadingUsers(true)
+                    try {
+                      const users = await listUsers()
+                      setSystemUsers(users)
+                    } finally {
+                      setIsLoadingUsers(false)
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+                  <span>Refresh Users</span>
+                </button>
+              </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 font-mono">
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-3">Department</th>
-                  <th className="py-3 px-3">Active Role</th>
-                  <th className="py-3 px-3">Superuser</th>
-                  <th className="py-3 px-3">Change Role</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-medium">
-                {systemUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-900/40 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-white">{u.full_name}</div>
-                      <div className="text-[10px] font-mono text-slate-400">{u.email}</div>
-                    </td>
-                    <td className="py-3 px-3 text-slate-300">{u.department}</td>
-                    <td className="py-3 px-3">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleColors[u.role]}`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3">
-                      {u.is_superuser ? (
-                        <span className="text-emerald-400 font-bold">Yes (Admin)</span>
-                      ) : (
-                        <span className="text-slate-500">No</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <select
-                        value={u.role}
-                        onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-red-500 cursor-pointer"
-                      >
-                        <option value="NETWORK_ADMIN">NETWORK_ADMIN</option>
-                        <option value="TELECOM_ENGINEER">TELECOM_ENGINEER</option>
-                        <option value="EXECUTIVE_VIEWER">EXECUTIVE_VIEWER</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              {/* Search & Filter Toolbar */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+                {/* Search Input */}
+                <div className="sm:col-span-6 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <Search className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search users by name, email, or department..."
+                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0B0F19] border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="sm:col-span-3">
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0B0F19] border border-slate-800 text-xs text-white focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
+                  >
+                    <option value="ALL">All Roles ({systemUsers.length})</option>
+                    <option value="NETWORK_ADMIN">NETWORK_ADMIN</option>
+                    <option value="TELECOM_ENGINEER">TELECOM_ENGINEER</option>
+                    <option value="EXECUTIVE_VIEWER">EXECUTIVE_VIEWER</option>
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="sm:col-span-3">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0B0F19] border border-slate-800 text-xs text-white focus:outline-none focus:border-red-500 transition-colors cursor-pointer"
+                  >
+                    <option value="ALL">All Account Statuses</option>
+                    <option value="ACTIVE">Active Accounts</option>
+                    <option value="INACTIVE">Deactivated Accounts</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Status Message */}
+              {roleUpdateMsg && (
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs font-semibold text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>{roleUpdateMsg}</span>
+                </div>
+              )}
+
+              {/* Table */}
+              <div className="overflow-x-auto rounded-xl border border-slate-800">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 font-mono">
+                      <th className="py-3 px-4">User Identity</th>
+                      <th className="py-3 px-3">Organization / Dept</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 px-3">Active Role</th>
+                      <th className="py-3 px-3">Reassign Role</th>
+                      <th className="py-3 px-3 text-right">Account Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-medium">
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-500 text-xs">
+                          No users found matching query filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((u) => {
+                        const isSoleAdmin =
+                          u.role === 'NETWORK_ADMIN' && u.is_active && activeAdminCount <= 1
+
+                        return (
+                          <tr key={u.id} className="hover:bg-slate-900/40 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs">
+                                  {u.full_name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-white flex items-center gap-1.5">
+                                    <span>{u.full_name}</span>
+                                    {u.is_superuser && (
+                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-950 text-red-400 border border-red-500/30">
+                                        Superuser
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] font-mono text-slate-400">{u.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-slate-300">{u.department}</td>
+                            <td className="py-3 px-3">
+                              {u.is_active ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-950/40 text-[#FF4D4D] border border-red-500/30">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                  Deactivated
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleColors[u.role]}`}>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3">
+                              <select
+                                value={u.role}
+                                disabled={isSoleAdmin}
+                                onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
+                                title={isSoleAdmin ? 'Cannot demote the sole active Network Administrator' : 'Assign role'}
+                                className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <option value="NETWORK_ADMIN">NETWORK_ADMIN</option>
+                                <option value="TELECOM_ENGINEER">TELECOM_ENGINEER</option>
+                                <option value="EXECUTIVE_VIEWER">EXECUTIVE_VIEWER</option>
+                              </select>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              <button
+                                type="button"
+                                disabled={isSoleAdmin}
+                                onClick={() => handleStatusToggle(u)}
+                                title={
+                                  isSoleAdmin
+                                    ? 'Cannot deactivate the sole active Network Administrator'
+                                    : u.is_active
+                                    ? 'Deactivate account'
+                                    : 'Activate account'
+                                }
+                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                                  u.is_active
+                                    ? 'bg-red-950/30 hover:bg-red-950/60 text-red-400 border border-red-500/30'
+                                    : 'bg-emerald-950/30 hover:bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
+                                }`}
+                              >
+                                <Power className="w-3 h-3" />
+                                <span>{u.is_active ? 'Deactivate' : 'Activate'}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 rounded-2xl bg-[#131B2E] border border-red-500/30 text-center space-y-4">
+              <div className="w-14 h-14 rounded-full bg-red-950/40 border border-red-500/40 text-[#FF4D4D] flex items-center justify-center mx-auto">
+                <Shield className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white">Administrator Access Required</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  User management, account activation, and role assignments are strictly restricted to{' '}
+                  <span className="font-bold text-red-400 font-mono">NETWORK_ADMIN</span> clearance.
+                </p>
+              </div>
+              <button
+                onClick={() => quickSwitchDemo('admin@airtel.com')}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition-colors"
+              >
+                Switch to Network Admin Persona
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Tab: Token Inspector */}

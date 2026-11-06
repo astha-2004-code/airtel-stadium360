@@ -54,13 +54,24 @@ export const updateProfile = async (
   return resp.data
 }
 
-export const listUsers = async (): Promise<User[]> => {
-  const resp = await apiClient.get<User[]>('/auth/users')
+export const listUsers = async (params?: {
+  search?: string
+  role?: string
+  is_active?: boolean
+  skip?: number
+  limit?: number
+}): Promise<User[]> => {
+  const resp = await apiClient.get<User[]>('/auth/users', { params })
   return resp.data
 }
 
 export const updateUserRole = async (userId: number, role: UserRole): Promise<User> => {
   const resp = await apiClient.put<User>(`/auth/users/${userId}/role`, { role })
+  return resp.data
+}
+
+export const updateUserStatus = async (userId: number, is_active: boolean): Promise<User> => {
+  const resp = await apiClient.put<User>(`/auth/users/${userId}/status`, { is_active })
   return resp.data
 }
 

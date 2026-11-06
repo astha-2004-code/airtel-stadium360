@@ -17,6 +17,7 @@ import {
   Eye,
   Wrench,
   Shield,
+  LogOut,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -26,7 +27,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule }) => {
-  const { user, role, canAccessModule, permissions } = useAuth()
+  const { user, role, canAccessModule, permissions, logout } = useAuth()
   const [showRestricted, setShowRestricted] = useState<boolean>(true)
 
   const allMenuItems = [
@@ -266,8 +267,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
         })}
       </nav>
 
-      {/* Footer System Telemetry Status */}
-      <div className="p-3 border-t border-[#223050] bg-[#131B2E]/60 text-xs space-y-1.5">
+      {/* Footer System Telemetry Status & Session Exit */}
+      <div className="p-3 border-t border-[#223050] bg-[#131B2E]/60 text-xs space-y-2">
         <div className="flex items-center justify-between text-slate-400 text-[10px]">
           <span>Security Clearance:</span>
           <span className={`font-mono font-bold ${currentRoleStyle.color}`}>{role || 'AUTHENTICATING'}</span>
@@ -276,10 +277,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentModule, onSelectModule 
           <span>Database Engine:</span>
           <span className="font-mono text-emerald-400 font-semibold">PostgreSQL (Neon)</span>
         </div>
-        <div className="flex items-center justify-between text-slate-400 text-[10px]">
-          <span>FastAPI Backend:</span>
-          <span className="font-mono text-emerald-400 font-semibold">Port 8000 (Live)</span>
-        </div>
+        <button
+          onClick={() => logout()}
+          className="w-full mt-1 py-1.5 px-3 rounded-lg bg-red-950/20 hover:bg-red-950/50 border border-red-500/20 hover:border-red-500/40 text-red-400 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Sign Out Session</span>
+        </button>
       </div>
     </aside>
   )

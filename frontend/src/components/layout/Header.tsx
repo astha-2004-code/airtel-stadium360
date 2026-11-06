@@ -14,6 +14,7 @@ import {
   Eye,
   Wrench,
   Sparkles,
+  LogOut,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { AuthModal } from '../auth/AuthModal'
@@ -40,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   isRefreshing,
 }) => {
-  const { user, isAuthenticated, role, permissions, quickSwitchDemo } = useAuth()
+  const { user, isAuthenticated, role, permissions, quickSwitchDemo, logout } = useAuth()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false)
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState<boolean>(false)
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState<boolean>(false)
@@ -266,25 +267,36 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* User Profile Pill / Auth Button */}
           {isAuthenticated && user ? (
-            <button
-              onClick={() => setIsProfileDrawerOpen(true)}
-              className="flex items-center space-x-2 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 rounded-xl px-2.5 py-1 transition-all group"
-            >
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#E40000] to-red-800 text-white font-bold text-[11px] flex items-center justify-center shadow-sm">
-                {initials}
-              </div>
-              <div className="text-left hidden lg:block">
-                <div className="text-xs font-bold text-white leading-tight">
-                  {user.full_name}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsProfileDrawerOpen(true)}
+                className="flex items-center space-x-2 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 rounded-xl px-2.5 py-1 transition-all group"
+              >
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#E40000] to-red-800 text-white font-bold text-[11px] flex items-center justify-center shadow-sm">
+                  {initials}
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${currentRoleStyle.bg}`}>
-                    {currentRoleStyle.label}
-                  </span>
+                <div className="text-left hidden lg:block">
+                  <div className="text-xs font-bold text-white leading-tight">
+                    {user.full_name}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${currentRoleStyle.bg}`}>
+                      {currentRoleStyle.label}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
-            </button>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+              </button>
+
+              <button
+                onClick={() => logout()}
+                title="Sign Out of Session"
+                className="p-1.5 rounded-xl bg-slate-900/90 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-colors"
+                aria-label="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}

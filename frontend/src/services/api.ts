@@ -30,10 +30,14 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor for clear errors
+// Response interceptor for clear errors & session handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('airtel_stadium360_jwt')
+      window.dispatchEvent(new Event('auth:unauthorized'))
+    }
     console.error('API Error:', error?.response?.data || error.message)
     return Promise.reject(error)
   }

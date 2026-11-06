@@ -81,11 +81,12 @@ interface AuthContextType {
   permissions: RolePermissions
   canAccessModule: (moduleId: string) => boolean
   hasPermission: (permission: keyof RolePermissions) => boolean
-  login: (credentials: LoginCredentials) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
+  login: (credentials: LoginCredentials) => Promise<User>
+  register: (data: RegisterData) => Promise<User>
   logout: () => Promise<void>
   quickSwitchDemo: (email: string) => Promise<void>
   updateUserProfile: (data: Partial<Pick<User, 'full_name' | 'department' | 'phone'>>) => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -117,22 +118,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(null)
         }
       } else {
-        // Fallback: auto-login as Default RF Planning Engineer for immediate competition demonstration
-        try {
-          const authData = await authService.login({
-            email: 'engineer@airtel.com',
-            password: 'AirtelRf@2026',
-          })
-          setUser(authData.user)
-          setToken(authData.access_token)
-        } catch (e) {
-          // backend offline or database seeding
-        }
+        setUser(null)
+        setToken(null)
       }
       setIsLoading(false)
     }
 
     initializeAuth()
+
+    const handleUnauthorized = () => {
+      authService.removeToken()
+      setUser(null)
+      setToken(null)
+    }
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
   const permissions = useMemo(() => {
@@ -149,23 +149,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return !!permissions[permission]
   }
 
-  const handleLogin = async (credentials: LoginCredentials) => {
+  const handleLogin = async (credentials: LoginCredentials): Promise<User> => {
     setIsLoading(true)
     try {
       const authData = await authService.login(credentials)
       setUser(authData.user)
       setToken(authData.access_token)
+      return authData.user
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleRegister = async (data: RegisterData) => {
+  const handleRegister = async (data: RegisterData): Promise<User> => {
     setIsLoading(true)
     try {
       const authData = await authService.register(data)
-      setUser(authData.user)
-      setToken(authData.access_token)
+      return authData.user
     } finally {
       setIsLoading(false)
     }
@@ -197,6 +197,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updated)
   }
 
+  const handleRefreshProfile = async () => {
+    try {
+      const profile = await authService.getProfile()
+      setUser(profile)
+    } catch (err) {
+      // Session expired
+      setUser(null)
+      setToken(null)
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -213,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout: handleLogout,
         quickSwitchDemo: handleQuickSwitchDemo,
         updateUserProfile: handleUpdateProfile,
+        refreshProfile: handleRefreshProfile,
       }}
     >
       {children}

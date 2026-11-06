@@ -11,13 +11,19 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserBase(BaseModel):
     email: str = Field(..., description="Corporate email address")
     full_name: str
-    role: str = Field("TELECOM_ENGINEER", description="Role: NETWORK_ADMIN, TELECOM_ENGINEER, EXECUTIVE_VIEWER")
+    role: str = Field("EXECUTIVE_VIEWER", description="Role: NETWORK_ADMIN, TELECOM_ENGINEER, EXECUTIVE_VIEWER")
     department: str = Field("Airtel Network Operations Centre (NOC)", description="Operating department")
     phone: Optional[str] = None
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    email: str = Field(..., description="Corporate or official email address")
+    full_name: str = Field(..., description="User full name")
     password: str = Field(..., min_length=6, description="Password with minimum 6 characters")
+    role: Optional[str] = Field("EXECUTIVE_VIEWER", description="Role: EXECUTIVE_VIEWER by default for public sign-up")
+    department: Optional[str] = Field("Airtel Observer / Guest", description="Institution or Department")
+    phone: Optional[str] = None
+    designation: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -33,6 +39,10 @@ class UserProfileUpdate(BaseModel):
 
 class RoleUpdateRequest(BaseModel):
     role: str = Field(..., description="Target role: NETWORK_ADMIN, TELECOM_ENGINEER, EXECUTIVE_VIEWER")
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool = Field(..., description="Active status flag for the account")
 
 
 class UserResponse(UserBase):

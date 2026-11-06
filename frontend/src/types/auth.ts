@@ -40,6 +40,12 @@ export interface RegisterData {
   role?: UserRole
   department?: string
   phone?: string
+  institution?: string
+  designation?: string
+}
+
+export interface UserStatusUpdate {
+  is_active: boolean
 }
 
 export interface AuthToken {

@@ -3,7 +3,7 @@ Airtel Stadium360 - Authentication & User Management Endpoints
 Exposes REST APIs for user registration, login, JWT token issuance, profile updates,
 role verification, permissions matrix, and demo account switching.
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api.deps import get_current_admin, get_current_user
@@ -18,6 +18,7 @@ from app.schemas.auth import (
     UserPermissionsResponse,
     UserProfileUpdate,
     UserResponse,
+    UserStatusUpdate,
 )
 from app.services.auth_service import DEMO_USERS, auth_service
 
@@ -29,15 +30,19 @@ def register_user(
     user_in: UserCreate,
     db: Session = Depends(get_db)
 ):
-    """Registers a new user account and returns an authenticated JWT access token."""
-    existing_user = auth_service.get_by_email(db, email=user_in.email)
+    """
+    Registers a new user account and returns an authenticated JWT access token.
+    Enforces security policy: public registrations receive the EXECUTIVE_VIEWER role by default.
+    """
+    cleaned_email = user_in.email.strip().lower()
+    existing_user = auth_service.get_by_email(db, email=cleaned_email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An account with this email address already exists in Airtel Stadium360."
         )
     
-    user = auth_service.create_user(db, user_in=user_in)
+    user = auth_service.create_user(db, user_in=user_in, allow_privileged_roles=False)
     access_token = create_access_token(subject=user.email, role=user.role)
     return Token(
         access_token=access_token,
@@ -126,13 +131,23 @@ def logout_user():
 
 @router.get("/users", response_model=List[UserResponse])
 def list_system_users(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 100,
     db: Session = Depends(get_db),
     admin_user: User = Depends(get_current_admin)
 ):
-    """Lists registered users (Strictly restricted to NETWORK_ADMIN role)."""
-    users = auth_service.list_users(db, skip=skip, limit=limit)
+    """Lists registered users with optional search and filtering (Restricted to NETWORK_ADMIN)."""
+    users = auth_service.list_users(
+        db,
+        search=search,
+        role=role,
+        is_active=is_active,
+        skip=skip,
+        limit=limit
+    )
     return [UserResponse.model_validate(u) for u in users]
 
 
@@ -143,7 +158,7 @@ def update_user_role(
     db: Session = Depends(get_db),
     admin_user: User = Depends(get_current_admin)
 ):
-    """Updates a registered user's role and permissions (Strictly restricted to NETWORK_ADMIN role)."""
+    """Updates a registered user's role and permissions (Restricted to NETWORK_ADMIN)."""
     valid_roles = ["NETWORK_ADMIN", "TELECOM_ENGINEER", "EXECUTIVE_VIEWER"]
     if payload.role not in valid_roles:
         raise HTTPException(
@@ -156,7 +171,31 @@ def update_user_role(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User account not found."
         )
-    updated = auth_service.update_role(db, user=user, new_role=payload.role)
+    try:
+        updated = auth_service.update_role(db, user=user, new_role=payload.role)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+    return UserResponse.model_validate(updated)
+
+
+@router.put("/users/{user_id}/status", response_model=UserResponse)
+def update_user_status(
+    user_id: int,
+    payload: UserStatusUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin)
+):
+    """Activates or deactivates a user account (Restricted to NETWORK_ADMIN)."""
+    user = auth_service.get_by_id(db, user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User account not found."
+        )
+    try:
+        updated = auth_service.update_status(db, user=user, is_active=payload.is_active)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
     return UserResponse.model_validate(updated)
 
 

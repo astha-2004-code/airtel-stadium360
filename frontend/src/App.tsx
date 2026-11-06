@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardPage } from './pages/DashboardPage'
@@ -12,17 +12,51 @@ import { CriticalServicesPage } from './pages/CriticalServicesPage'
 import { AuthManagementPage } from './pages/AuthManagementPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { EvaluationPage } from './pages/EvaluationPage'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { useAuth } from './context/AuthContext'
-import { Lock, ShieldAlert, ArrowRight, ShieldCheck, Wrench, Shield } from 'lucide-react'
+import { Lock, ArrowRight, ShieldCheck, Wrench, Shield, Radio } from 'lucide-react'
 
 export function App() {
+  const { isAuthenticated, isLoading, role, canAccessModule, quickSwitchDemo } = useAuth()
+
+  // Track authentication view for unauthenticated visitors
+  const [authView, setAuthView] = useState<'login' | 'register'>(() => {
+    return typeof window !== 'undefined' && window.location.pathname === '/register'
+      ? 'register'
+      : 'login'
+  })
+
   const [currentModule, setCurrentModule] = useState<string>('dashboard')
   const [capacity, setCapacity] = useState<number>(100000)
   const [matchPhase, setMatchPhase] = useState<string>('Innings break')
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
 
-  const { role, canAccessModule, permissions, quickSwitchDemo } = useAuth()
+  // Listen to popstate for browser forward/back buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.pathname === '/register') {
+        setAuthView('register')
+      } else if (window.location.pathname === '/login') {
+        setAuthView('login')
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  // Sync URL when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (
+        typeof window !== 'undefined' &&
+        (window.location.pathname === '/login' || window.location.pathname === '/register')
+      ) {
+        window.history.replaceState(null, '', '/dashboard')
+      }
+    }
+  }, [isAuthenticated])
 
   // System Health baseline
   const healthScore = capacity === 65000 ? 35 : 28
@@ -36,6 +70,59 @@ export function App() {
     }, 600)
   }
 
+  // 1. Loading Splash
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#070A13] flex flex-col items-center justify-center text-white font-sans space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E40000] to-red-800 flex items-center justify-center text-white shadow-2xl shadow-red-950/70 animate-pulse border border-red-500/40">
+          <Radio className="w-7 h-7 animate-spin" />
+        </div>
+        <div className="text-center space-y-1">
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="text-[#E40000] font-black text-sm tracking-wide">AIRTEL</span>
+            <span className="text-white font-extrabold text-sm tracking-wide">STADIUM360</span>
+          </div>
+          <p className="text-xs text-slate-400 font-mono">
+            Verifying 5G Private NOC Security Session...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 2. Unauthenticated: Render dedicated Login or Register page
+  if (!isAuthenticated) {
+    if (authView === 'register') {
+      return (
+        <RegisterPage
+          onNavigateToLogin={() => {
+            setAuthView('login')
+            if (typeof window !== 'undefined') {
+              window.history.pushState(null, '', '/login')
+            }
+          }}
+        />
+      )
+    }
+
+    return (
+      <LoginPage
+        onNavigateToRegister={() => {
+          setAuthView('register')
+          if (typeof window !== 'undefined') {
+            window.history.pushState(null, '', '/register')
+          }
+        }}
+        onLoginSuccess={() => {
+          if (typeof window !== 'undefined') {
+            window.history.pushState(null, '', '/dashboard')
+          }
+        }}
+      />
+    )
+  }
+
+  // 3. Authenticated: Render Main Application Layout & Selected Module
   const isModuleAllowed = canAccessModule(currentModule)
 
   return (

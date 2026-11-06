@@ -107,17 +107,24 @@ class AuthService:
     def get_by_id(self, db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
 
-    def create_user(self, db: Session, user_in: UserCreate) -> User:
+    def create_user(self, db: Session, user_in: UserCreate, allow_privileged_roles: bool = False) -> User:
         hashed_password = get_password_hash(user_in.password)
+        
+        # Enforce security: public registrations must never receive elevated roles directly
+        assigned_role = "EXECUTIVE_VIEWER"
+        if allow_privileged_roles and user_in.role in ["NETWORK_ADMIN", "TELECOM_ENGINEER", "EXECUTIVE_VIEWER"]:
+            assigned_role = user_in.role
+
+        dept = user_in.department or "Airtel Observer / Guest"
         user = User(
-            email=user_in.email.lower(),
-            full_name=user_in.full_name,
+            email=user_in.email.strip().lower(),
+            full_name=user_in.full_name.strip(),
             hashed_password=hashed_password,
-            role=user_in.role or "TELECOM_ENGINEER",
-            department=user_in.department or "Airtel Network Operations Centre (NOC)",
+            role=assigned_role,
+            department=dept,
             phone=user_in.phone,
             is_active=True,
-            is_superuser=user_in.role == "NETWORK_ADMIN",
+            is_superuser=(assigned_role == "NETWORK_ADMIN"),
             created_at=datetime.now(timezone.utc),
         )
         db.add(user)
@@ -150,14 +157,60 @@ class AuthService:
         return user
 
     def update_role(self, db: Session, user: User, new_role: str) -> User:
+        # Prevent demoting the last active administrator
+        if user.role == "NETWORK_ADMIN" and new_role != "NETWORK_ADMIN":
+            active_admins = db.query(User).filter(
+                User.role == "NETWORK_ADMIN",
+                User.is_active == True,
+                User.id != user.id
+            ).count()
+            if active_admins == 0:
+                raise ValueError("Cannot demote the last active NETWORK_ADMIN in the system.")
+
         user.role = new_role
         user.is_superuser = (new_role == "NETWORK_ADMIN")
         db.commit()
         db.refresh(user)
         return user
 
-    def list_users(self, db: Session, skip: int = 0, limit: int = 50) -> List[User]:
-        return db.query(User).offset(skip).limit(limit).all()
+    def update_status(self, db: Session, user: User, is_active: bool) -> User:
+        # Prevent deactivating the last active administrator
+        if user.role == "NETWORK_ADMIN" and not is_active:
+            active_admins = db.query(User).filter(
+                User.role == "NETWORK_ADMIN",
+                User.is_active == True,
+                User.id != user.id
+            ).count()
+            if active_admins == 0:
+                raise ValueError("Cannot deactivate the last active NETWORK_ADMIN in the system.")
+
+        user.is_active = is_active
+        db.commit()
+        db.refresh(user)
+        return user
+
+    def list_users(
+        self,
+        db: Session,
+        search: Optional[str] = None,
+        role: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[User]:
+        query = db.query(User)
+        if search:
+            term = f"%{search.strip().lower()}%"
+            query = query.filter(
+                (User.full_name.ilike(term)) |
+                (User.email.ilike(term)) |
+                (User.department.ilike(term))
+            )
+        if role:
+            query = query.filter(User.role == role)
+        if is_active is not None:
+            query = query.filter(User.is_active == is_active)
+        return query.order_by(User.id.asc()).offset(skip).limit(limit).all()
 
 
 auth_service = AuthService()
