@@ -20,3 +20,4 @@ services:
         sync: false
       - key: BACKEND_CORS_ORIGINS
         value: "https://airtel-stadium360.vercel.app,http://localhost:5173"
+
