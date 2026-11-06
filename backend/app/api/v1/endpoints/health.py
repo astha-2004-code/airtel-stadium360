@@ -1,10 +1,12 @@
+import logging
 from fastapi import APIRouter, Depends, status, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.core.database import get_db
+from app.core.database import get_db, engine
 from app.core.config import settings
 from app.schemas.health import HealthResponse
 
+logger = logging.getLogger("stadium360.health")
 router = APIRouter()
 
 @router.get("/health", response_model=HealthResponse)
@@ -13,7 +15,8 @@ def health_check(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))
     except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
+        logger.warning(f"Database health check warning: {e}")
+        db_status = "disconnected"
         
     return HealthResponse(
         status="ok",
@@ -22,6 +25,24 @@ def health_check(db: Session = Depends(get_db)):
         environment=settings.ENVIRONMENT,
         database_status=db_status
     )
+
+@router.get("/health/db")
+def database_health(response: Response, db: Session = Depends(get_db)):
+    """Dedicated database connectivity healthcheck without exposing credentials."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "driver": engine.dialect.name
+        }
+    except Exception as e:
+        logger.error(f"Database health check error: {e}")
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "status": "unhealthy",
+            "database": "disconnected"
+        }
 
 @router.get("/ready")
 def readiness_check(response: Response, db: Session = Depends(get_db)):
@@ -35,10 +56,11 @@ def readiness_check(response: Response, db: Session = Depends(get_db)):
             "version": settings.VERSION,
         }
     except Exception as e:
+        logger.error(f"Readiness check error: {e}")
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {
             "status": "not_ready",
-            "database": f"error: {str(e)}",
+            "database": "disconnected",
             "environment": settings.ENVIRONMENT,
         }
 

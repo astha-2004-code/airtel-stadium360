@@ -1,4 +1,7 @@
 from typing import List, Union
+import json
+import ast
+from urllib.parse import urlparse
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,24 +22,58 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @field_validator("BACKEND_CORS_ORIGINS", mode="after")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        raw_list: List[str] = []
         if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return []
             if v.startswith("[") and v.endswith("]"):
-                import json
-                return json.loads(v)
-            return [i.strip() for i in v.split(",") if i.strip()]
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        raw_list = [str(item).strip() for item in parsed if item]
+                    elif isinstance(parsed, str):
+                        raw_list = [parsed.strip()]
+                except json.JSONDecodeError:
+                    try:
+                        parsed = ast.literal_eval(v)
+                        if isinstance(parsed, list):
+                            raw_list = [str(item).strip() for item in parsed if item]
+                    except Exception as e:
+                        raise ValueError(f"Invalid JSON array in BACKEND_CORS_ORIGINS: {v}") from e
+            else:
+                raw_list = [item.strip() for item in v.split(",") if item.strip()]
         elif isinstance(v, list):
-            return v
-        raise ValueError(v)
+            raw_list = [str(item).strip() for item in v if item]
+        else:
+            raise ValueError(f"BACKEND_CORS_ORIGINS must be a list or string, got {type(v)}")
+
+        # Validate and normalize each origin (strip trailing slash, verify scheme)
+        validated_origins: List[str] = []
+        for origin in raw_list:
+            cleaned = origin.rstrip("/")
+            if cleaned == "*":
+                validated_origins.append("*")
+                continue
+            parsed = urlparse(cleaned)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                raise ValueError(
+                    f"Invalid origin URL '{origin}' in BACKEND_CORS_ORIGINS. "
+                    "Must be a valid URL with http:// or https:// scheme, or '*'"
+                )
+            validated_origins.append(cleaned)
+
+        return validated_origins
 
     model_config = SettingsConfigDict(
         env_file=".env",

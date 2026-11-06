@@ -1,6 +1,6 @@
 # ==============================================================================
 # Airtel Stadium360 — Production Backend Dockerfile
-# Multi-stage lean build with non-root security compliance and health checks
+# Multi-stage lean build with non-root security compliance and dynamic port binding
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -58,11 +58,12 @@ COPY --chown=stadium:stadium . /app
 # Switch to non-root user
 USER stadium
 
+# Default port documentation (Render dynamically injects $PORT at runtime)
 EXPOSE 8000
 
-# Automated Docker Container Healthcheck
-HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Automated Docker Container Healthcheck targeting dynamic Render port with http://localhost:8000/health fallback
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -f "http://localhost:${PORT:-8000}/health" || curl -f "http://localhost:8000/health" || exit 1
 
-# Production application launch with Uvicorn worker process management
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Production application launch with dynamic Render PORT and worker concurrency
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --proxy-headers --forwarded-allow-ips '*'"]

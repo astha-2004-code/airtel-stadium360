@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, engine
 from app.api.v1.api import api_router
 from app.api.v1.endpoints import evaluation
 from app.schemas.health import HealthResponse
@@ -61,11 +62,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Set all CORS enabled origins
-cors_origins = (
-    ["*"]
-    if settings.ENVIRONMENT == "development"
-    else [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
-)
+cors_origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
+if settings.ENVIRONMENT == "development":
+    for local_origin in [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]:
+        if local_origin not in cors_origins:
+            cors_origins.append(local_origin)
 
 app.add_middleware(
     CORSMiddleware,
@@ -97,7 +103,8 @@ def quick_health():
     try:
         db.execute(text("SELECT 1"))
     except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
+        logger.warning(f"Database health check failed: {e}")
+        db_status = "disconnected"
     finally:
         db.close()
 
@@ -108,6 +115,28 @@ def quick_health():
         environment=settings.ENVIRONMENT,
         database_status=db_status
     )
+
+
+@app.get("/health/db", tags=["health"])
+def health_database(response: Response):
+    """Dedicated database connectivity healthcheck endpoint without exposing credentials."""
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "driver": engine.dialect.name
+        }
+    except Exception as e:
+        logger.error(f"Health DB probe error: {e}")
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "status": "unhealthy",
+            "database": "disconnected"
+        }
+    finally:
+        db.close()
 
 
 @app.get("/health/ready", tags=["health"])
@@ -123,10 +152,11 @@ def readiness_probe(response: Response):
             "version": settings.VERSION,
         }
     except Exception as e:
+        logger.error(f"Readiness probe error: {e}")
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {
             "status": "not_ready",
-            "database": f"unhealthy: {str(e)}",
+            "database": "disconnected",
             "environment": settings.ENVIRONMENT,
         }
     finally:
@@ -145,4 +175,5 @@ def liveness_probe():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)
