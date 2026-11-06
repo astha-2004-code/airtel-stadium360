@@ -1,26 +1,24 @@
 /**
  * Airtel Stadium360 - Reporting & Data Exports Service
- * Communicates with backend /api/v1/reports endpoints.
+ * Communicates with backend /reports endpoints.
  */
-import axios from 'axios'
+import { apiClient } from './api'
 import { ReportCatalogResponse, ReportExecutiveSummary } from '../types/reports'
 
-const API_BASE = '/api/v1/reports'
-
 export const fetchReportCatalog = async (): Promise<ReportCatalogResponse> => {
-  const resp = await axios.get<ReportCatalogResponse>(`${API_BASE}/catalog`)
+  const resp = await apiClient.get<ReportCatalogResponse>('/reports/catalog')
   return resp.data
 }
 
 export const fetchReportExecutiveSummary = async (capacity: number = 100000): Promise<ReportExecutiveSummary> => {
-  const resp = await axios.get<ReportExecutiveSummary>(`${API_BASE}/summary`, {
+  const resp = await apiClient.get<ReportExecutiveSummary>('/reports/summary', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const downloadReportFile = async (downloadUrl: string, defaultFilename: string): Promise<void> => {
-  const resp = await axios.get(downloadUrl, {
+  const resp = await apiClient.get(downloadUrl, {
     responseType: 'blob',
   })
 

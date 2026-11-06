@@ -1,8 +1,8 @@
 /**
  * Airtel Stadium360 - Authentication Service
- * Communicates with backend /api/v1/auth endpoints and manages JWT persistence.
+ * Communicates with backend /auth endpoints and manages JWT persistence.
  */
-import axios from 'axios'
+import { apiClient } from './api'
 import {
   AuthToken,
   DemoAccount,
@@ -11,7 +11,6 @@ import {
   User,
 } from '../types/auth'
 
-const API_BASE = '/api/v1/auth'
 const TOKEN_KEY = 'airtel_stadium360_jwt'
 
 export const getToken = (): string | null => {
@@ -26,20 +25,8 @@ export const removeToken = (): void => {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-// Global Axios Interceptor to attach JWT token
-axios.interceptors.request.use(
-  (config) => {
-    const token = getToken()
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
-
 export const login = async (credentials: LoginCredentials): Promise<AuthToken> => {
-  const resp = await axios.post<AuthToken>(`${API_BASE}/login`, credentials)
+  const resp = await apiClient.post<AuthToken>('/auth/login', credentials)
   if (resp.data.access_token) {
     setToken(resp.data.access_token)
   }
@@ -47,7 +34,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthToken> =
 }
 
 export const register = async (data: RegisterData): Promise<AuthToken> => {
-  const resp = await axios.post<AuthToken>(`${API_BASE}/register`, data)
+  const resp = await apiClient.post<AuthToken>('/auth/register', data)
   if (resp.data.access_token) {
     setToken(resp.data.access_token)
   }
@@ -55,20 +42,20 @@ export const register = async (data: RegisterData): Promise<AuthToken> => {
 }
 
 export const getProfile = async (): Promise<User> => {
-  const resp = await axios.get<User>(`${API_BASE}/me`)
+  const resp = await apiClient.get<User>('/auth/me')
   return resp.data
 }
 
 export const updateProfile = async (
   data: Partial<Pick<User, 'full_name' | 'department' | 'phone'>>
 ): Promise<User> => {
-  const resp = await axios.put<User>(`${API_BASE}/me`, data)
+  const resp = await apiClient.put<User>('/auth/me', data)
   return resp.data
 }
 
 export const logout = async (): Promise<void> => {
   try {
-    await axios.post(`${API_BASE}/logout`)
+    await apiClient.post('/auth/logout')
   } catch (err) {
     // Ignore error if already expired
   } finally {
@@ -77,6 +64,6 @@ export const logout = async (): Promise<void> => {
 }
 
 export const getDemoAccounts = async (): Promise<DemoAccount[]> => {
-  const resp = await axios.get<DemoAccount[]>(`${API_BASE}/demo-accounts`)
+  const resp = await apiClient.get<DemoAccount[]>('/auth/demo-accounts')
   return resp.data
 }

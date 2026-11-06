@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -13,11 +14,31 @@ from app.schemas.health import HealthResponse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("stadium360")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initializes database schema and baseline telemetry if empty (e.g. fresh Neon SQL instance)."""
+    db = SessionLocal()
+    try:
+        from app.services.seed_data import seed_database
+        from app.services.auth_service import seed_demo_users_if_needed
+
+        seed_database(db)
+        seed_demo_users_if_needed(db)
+        logger.info("Database schema and seed records initialized successfully.")
+    except Exception as e:
+        logger.warning(f"Database initialization notice: {e}")
+    finally:
+        db.close()
+    yield
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description="Airtel Stadium360 — AI-powered predictive network optimization and intelligent stadium connectivity platform",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 
@@ -49,6 +70,7 @@ cors_origins = (
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +112,7 @@ def quick_health():
 
 @app.get("/health/ready", tags=["health"])
 def readiness_probe(response: Response):
-    """Kubernetes / Docker readiness probe."""
+    """Kubernetes / Docker / Render readiness probe."""
     db = SessionLocal()
     try:
         db.execute(text("SELECT 1"))
@@ -113,7 +135,7 @@ def readiness_probe(response: Response):
 
 @app.get("/health/live", tags=["health"])
 def liveness_probe():
-    """Kubernetes / Docker liveness probe."""
+    """Kubernetes / Docker / Render liveness probe."""
     return {
         "status": "live",
         "app": settings.PROJECT_NAME,

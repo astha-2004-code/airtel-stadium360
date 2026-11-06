@@ -1,8 +1,8 @@
 /**
  * Airtel Stadium360 - Critical Services & UPI Protection Service
- * API client communicating with backend /api/v1/critical-services endpoints.
+ * API client communicating with backend /critical-services endpoints.
  */
-import axios from 'axios'
+import { apiClient } from './api'
 import {
   UpiReliabilityKpis,
   QosSliceDefinition,
@@ -13,39 +13,36 @@ import {
   CriticalServicesSimulationResponse,
 } from '../types/criticalServices'
 
-const API_BASE = '/api/v1/critical-services'
-
 export const fetchUpiReliability = async (capacity: number = 100000): Promise<UpiReliabilityKpis> => {
-  const resp = await axios.get<UpiReliabilityKpis>(`${API_BASE}/upi-reliability`, {
+  const resp = await apiClient.get<UpiReliabilityKpis>('/critical-services/upi-reliability', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const fetchQosSlices = async (): Promise<QosSliceDefinition[]> => {
-  const resp = await axios.get<QosSliceDefinition[]>(`${API_BASE}/qos-slices`)
+  const resp = await apiClient.get<QosSliceDefinition[]>('/critical-services/qos-slices')
   return resp.data
 }
 
 export const fetchPaymentHopLatencies = async (): Promise<PaymentHopLatency[]> => {
-  const resp = await axios.get<PaymentHopLatency[]>(`${API_BASE}/payment-hop-latencies`)
+  const resp = await apiClient.get<PaymentHopLatency[]>('/critical-services/payment-hop-latencies')
   return resp.data
 }
 
 export const fetchSiteUpiTelemetry = async (): Promise<SiteUpiTelemetry[]> => {
-  const resp = await axios.get<SiteUpiTelemetry[]>(`${API_BASE}/site-telemetry`)
+  const resp = await apiClient.get<SiteUpiTelemetry[]>('/critical-services/site-telemetry')
   return resp.data
 }
 
 export const fetchCongestionPolicies = async (): Promise<CongestionResponsePolicy[]> => {
-  const resp = await axios.get<CongestionResponsePolicy[]>(`${API_BASE}/congestion-policies`)
+  const resp = await apiClient.get<CongestionResponsePolicy[]>('/critical-services/congestion-policies')
   return resp.data
 }
 
 export const simulateCriticalServices = async (
   payload: CriticalServicesSimulationRequest
 ): Promise<CriticalServicesSimulationResponse> => {
-  const resp = await axios.post<CriticalServicesSimulationResponse>(`${API_BASE}/simulate`, payload)
+  const resp = await apiClient.post<CriticalServicesSimulationResponse>('/critical-services/simulate', payload)
   return resp.data
 }
-

@@ -40,3 +40,4 @@ __MACOSX/
 
 # Logs
 *.log
+.neon

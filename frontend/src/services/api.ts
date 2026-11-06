@@ -1,6 +1,14 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+// Normalize API base URL: handles both relative paths ("/api/v1") and absolute backend URLs (e.g. Render)
+const rawUrl = (import.meta.env.VITE_API_URL || '/api/v1').trim()
+export const API_BASE_URL = rawUrl.endsWith('/api/v1')
+  ? rawUrl
+  : rawUrl.endsWith('/')
+    ? `${rawUrl.slice(0, -1)}/api/v1`
+    : rawUrl.startsWith('http')
+      ? `${rawUrl}/api/v1`
+      : rawUrl
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -1,9 +1,9 @@
 /**
  * Airtel Stadium360 - Evaluation Service Client
  * Author: ByteForge | NIT Delhi
- * Communicates with backend /api/v1/evaluation and /api/evaluation endpoints.
+ * Communicates with backend /evaluation endpoints via unified apiClient.
  */
-import axios from 'axios'
+import { apiClient } from './api'
 import {
   EvaluationOverviewResponse,
   NetworkUtilizationMetrics,
@@ -16,43 +16,41 @@ import {
   EvaluationCompareResponse,
 } from '../types/evaluation'
 
-const API_BASE = '/api/v1/evaluation'
-
 export const fetchEvaluationOverview = async (capacity: number = 100000): Promise<EvaluationOverviewResponse> => {
-  const resp = await axios.get<EvaluationOverviewResponse>(`${API_BASE}/overview`, {
+  const resp = await apiClient.get<EvaluationOverviewResponse>('/evaluation/overview', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const fetchNetworkEvaluation = async (capacity: number = 100000): Promise<NetworkUtilizationMetrics> => {
-  const resp = await axios.get<NetworkUtilizationMetrics>(`${API_BASE}/network`, {
+  const resp = await apiClient.get<NetworkUtilizationMetrics>('/evaluation/network', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const fetchThroughputEvaluation = async (capacity: number = 100000): Promise<ThroughputPerformanceMetrics> => {
-  const resp = await axios.get<ThroughputPerformanceMetrics>(`${API_BASE}/throughput`, {
+  const resp = await apiClient.get<ThroughputPerformanceMetrics>('/evaluation/throughput', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const fetchReliabilityEvaluation = async (capacity: number = 100000): Promise<UpiReliabilityMetrics> => {
-  const resp = await axios.get<UpiReliabilityMetrics>(`${API_BASE}/reliability`, {
+  const resp = await apiClient.get<UpiReliabilityMetrics>('/evaluation/reliability', {
     params: { capacity },
   })
   return resp.data
 }
 
 export const fetchBackhaulEvaluation = async (): Promise<BackhaulPerformanceMetrics> => {
-  const resp = await axios.get<BackhaulPerformanceMetrics>(`${API_BASE}/backhaul`)
+  const resp = await apiClient.get<BackhaulPerformanceMetrics>('/evaluation/backhaul')
   return resp.data
 }
 
 export const fetchFinancialEvaluation = async (capacity: number = 100000): Promise<FinancialEvaluationMetrics> => {
-  const resp = await axios.get<FinancialEvaluationMetrics>(`${API_BASE}/financial`, {
+  const resp = await apiClient.get<FinancialEvaluationMetrics>('/evaluation/financial', {
     params: { capacity },
   })
   return resp.data
@@ -61,7 +59,7 @@ export const fetchFinancialEvaluation = async (capacity: number = 100000): Promi
 export const compareEvaluationScenarios = async (
   payload: EvaluationCompareRequest
 ): Promise<EvaluationCompareResponse> => {
-  const resp = await axios.post<EvaluationCompareResponse>(`${API_BASE}/compare`, payload)
+  const resp = await apiClient.post<EvaluationCompareResponse>('/evaluation/compare', payload)
   return resp.data
 }
 
@@ -76,4 +74,3 @@ export const evaluationService = {
 }
 
 export default evaluationService
-
