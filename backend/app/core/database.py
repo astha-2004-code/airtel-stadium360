@@ -3,10 +3,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 
-# If DATABASE_URL starts with postgres://, convert to postgresql:// for SQLAlchemy
+# Normalize PostgreSQL driver for SQLAlchemy (psycopg2)
 db_url = settings.DATABASE_URL
 if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # Configure engine with pooling and health checks
 if db_url.startswith("sqlite"):
