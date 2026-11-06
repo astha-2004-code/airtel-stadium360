@@ -62,3 +62,4 @@ backend/data/*.db
 # Node / Frontend artifacts
 node_modules/
 frontend/
+

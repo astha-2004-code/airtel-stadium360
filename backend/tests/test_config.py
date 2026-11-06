@@ -47,3 +47,4 @@ def test_cors_origins_invalid_url():
     os.environ["BACKEND_CORS_ORIGINS"] = "not_a_valid_url"
     with pytest.raises(ValueError):
         Settings()
+
